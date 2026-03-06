@@ -3,6 +3,5 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   integrations: [react()],
-  site: 'https://kubedai.github.io',
-  base: '/datasignal',
+  site: 'https://datasignal.dev',
 });
