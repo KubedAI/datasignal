@@ -18,13 +18,6 @@ type Platform = {
   action: (url: string, text: string) => void;
 };
 
-function XIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
 
 function LinkedInIcon() {
   return (
@@ -71,21 +64,12 @@ export default function ShareSheet({ framework: fw, signal, signalIndex, onClose
   const [copied, setCopied] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}${window.location.pathname}?fw=${fw.id}&s=${signalIndex}`
-    : "";
+  const SITE = "https://kubedai.github.io/datasignal";
+  const shareUrl = `${SITE}?fw=${fw.id}&s=${signalIndex}`;
 
   const shareText = `"${signal.headline}"\n\n${signal.metric} ${signal.metricLabel}\n\nProduction signal from ${fw.name} on Kubernetes.`;
 
   const platforms: Platform[] = [
-    {
-      id: "x",
-      label: "Post on X",
-      color: "#FFFFFF",
-      bg: "#000000",
-      icon: <XIcon />,
-      action: (url, text) => window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text + "\n\n" + url)}`, "_blank"),
-    },
     {
       id: "linkedin",
       label: "Share on LinkedIn",

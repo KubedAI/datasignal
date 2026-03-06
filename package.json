@@ -7,7 +7,9 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run src/tests/links.test.ts",
+    "test:links": "npm run build && vitest run src/tests/links.test.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.0.0",
@@ -17,5 +19,8 @@
     "astro": "^5.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
   }
 }

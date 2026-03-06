@@ -1,5 +1,6 @@
 import { FRAMEWORKS } from "../data/tips";
 import { getFrameworkIcon } from "./FrameworkIcon";
+import TrafficLight from "./TrafficLight";
 
 type Props = {
   onSelect: (id: string) => void;
@@ -95,32 +96,13 @@ export default function Hero({ onSelect }: Props) {
           fontSize: 15, color: "#5A6A7E", lineHeight: 1.75,
           marginBottom: 40, fontFamily: "'Space Grotesk', sans-serif",
         }}>
-          Real learnings from production data engineering at scale.<br />
-          No theory. No fluff. Just what actually works.
+          Real learnings from running data and AI workloads on Kubernetes at scale.<br />
+          No theory. No fluff. Just what works in production.
         </p>
 
-        {/* Traffic light legend */}
-        <div style={{
-          display: "inline-flex", gap: 16, marginBottom: 28,
-          padding: "10px 20px", borderRadius: 12,
-          background: "#0A0F1E", border: "1px solid #1A2540",
-        }}>
-          {([
-            { color: "#22C55E", label: "Good to do" },
-            { color: "#F59E0B", label: "Apply carefully" },
-            { color: "#EF4444", label: "Avoid in production" },
-          ] as const).map(({ color, label }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: color, boxShadow: `0 0 8px ${color}`,
-                animation: "blink 2.5s ease-in-out infinite",
-              }} />
-              <span style={{ fontSize: 10, color: "#6B8099", fontFamily: "'JetBrains Mono', monospace" }}>
-                {label}
-              </span>
-            </div>
-          ))}
+        {/* Animated traffic light legend */}
+        <div style={{ marginBottom: 28 }}>
+          <TrafficLight animate={true} bulb={72} />
         </div>
 
         {/* Stats */}
@@ -131,11 +113,13 @@ export default function Hero({ onSelect }: Props) {
           {[
             { value: String(totalSignals), label: "Signals" },
             { value: String(FRAMEWORKS.length), label: "Frameworks" },
+            { value: "13", label: "Data Frameworks" },
+            { value: "1", label: "AI Frameworks" },
             { value: "Kubernetes", label: "Platform" },
-          ].map((stat, i) => (
+          ].map((stat, i, arr) => (
             <div key={i} style={{
               padding: "16px 28px", textAlign: "center",
-              borderRight: i < 2 ? "1px solid #1A2540" : "none",
+              borderRight: i < arr.length - 1 ? "1px solid #1A2540" : "none",
             }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace" }}>
                 {stat.value}
@@ -202,6 +186,50 @@ export default function Hero({ onSelect }: Props) {
             </button>
           ))}
         </div>
+        {/* Author card */}
+        <div style={{
+          marginTop: 48, display: "inline-flex", alignItems: "center", gap: 16,
+          padding: "18px 24px", borderRadius: 16,
+          background: "#0A0F1E", border: "1px solid #1A2540",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+        }}>
+          <img
+            src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/vara-linkedin.jpeg`}
+            alt="Vara Bonthu"
+            style={{
+              width: 56, height: 56, borderRadius: "50%",
+              objectFit: "cover", objectPosition: "center top",
+              border: "2px solid #E25A1C50", flexShrink: 0,
+            }}
+          />
+          <div style={{ textAlign: "left" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif" }}>
+              Vara Bonthu
+            </div>
+            <div style={{ fontSize: 11, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+              Data and AI on Kubernetes
+            </div>
+            <div style={{ fontSize: 11, color: "#5A6A7E", fontFamily: "'Space Grotesk', sans-serif", marginTop: 3 }}>
+              Principal Open Source Solutions Architect · AWS
+            </div>
+            <a
+              href="https://www.linkedin.com/in/varaprofile/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                marginTop: 8, fontSize: 11, color: "#0A66C2",
+                fontFamily: "'JetBrains Mono', monospace", textDecoration: "none",
+                padding: "3px 10px", borderRadius: 6,
+                background: "#0A66C210", border: "1px solid #0A66C230",
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              LinkedIn
+            </a>
+          </div>
+        </div>
+
       </div>
       </div>
     </main>

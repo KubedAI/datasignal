@@ -203,7 +203,7 @@ export default function Sidebar({ frameworks, activeId, onSelect }: Props) {
       {/* About link at bottom */}
       <div style={{ borderTop: "1px solid #0F1829", padding: "14px 16px" }}>
         <a
-          href="/about"
+          href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/about`}
           style={{
             display: "flex", alignItems: "center", gap: 10,
             textDecoration: "none", padding: "8px 10px", borderRadius: 8,
