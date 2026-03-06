@@ -1,0 +1,60 @@
+import type { Framework } from "../types";
+
+export const starrocks: Framework = {
+  id: "starrocks",
+  name: "StarRocks",
+  short: "StarRocks",
+  category: "Lakehouse",
+  color: "#F5C400",
+  tagline: "Sub-second analytics on lakehouse data",
+  signals: [
+    {
+      id: 1,
+      tag: "Lakehouse",
+      headline: "Shared-data mode: stateless BEs on EKS, data stays in S3",
+      detail: "StarRocks shared-data mode separates compute from storage — data lives in S3, FEs and BEs are stateless pods. Scale BEs up for heavy analytical bursts, down to zero overnight. No local disk dependency means Karpenter can use any instance type — no NVMe required, no data migration on scale events.",
+      metric: "Stateless BEs",
+      metricLabel: "scale to zero overnight",
+    },
+    {
+      id: 2,
+      tag: "Ingestion",
+      headline: "Stream Load bypasses the FE query planner — 10x ingestion throughput",
+      detail: "StarRocks Stream Load writes directly to BE tablets, bypassing the FE query planner entirely. For Kafka-to-StarRocks pipelines, Stream Load achieves 500MB/s+ per BE vs 50MB/s for INSERT INTO. Use Routine Load for automated Kafka consumption with offset management. INSERT INTO is for small batch corrections only.",
+      metric: "10×",
+      metricLabel: "ingestion throughput",
+    },
+    {
+      id: 3,
+      tag: "Performance",
+      headline: "Co-located tables eliminate shuffle on your most frequent joins",
+      detail: "When two large tables share the same distribution key and bucket count, StarRocks joins them locally — zero shuffle. Identify your 2–3 most-joined dimension tables and co-locate them with the fact table using PROPERTIES('colocate_with'='group_name'). Join performance improves 3–5× for these patterns.",
+      metric: "3–5×",
+      metricLabel: "join performance",
+    },
+    {
+      id: 4,
+      tag: "Primary Key",
+      headline: "Primary Key tables handle real-time upserts at stream speed",
+      detail: "StarRocks Primary Key model supports upserts efficiently using a delete bitmap — no merge-on-read overhead at query time. For CDC (Change Data Capture) pipelines via Flink or Kafka, Primary Key tables maintain fresh data without full-table rewrites. Queries always see the latest merged state.",
+      metric: "Real-time",
+      metricLabel: "upsert without query penalty",
+    },
+    {
+      id: 5,
+      tag: "Query Cache",
+      headline: "Query Cache for BI dashboards: sub-100ms for repeated patterns",
+      detail: "StarRocks Query Cache caches intermediate aggregation results for identical query patterns. BI tools (Tableau, Superset, Metabase) repeatedly run the same GROUP BY queries with date filters. First run computes and caches; subsequent runs return cached results in <100ms. Cache is per-BE and respects TTL.",
+      metric: "<100ms",
+      metricLabel: "repeated dashboard queries",
+    },
+    {
+      id: 6,
+      tag: "Storage",
+      headline: "Materialized Views refresh automatically — no ETL pipeline needed",
+      detail: "StarRocks async Materialized Views refresh incrementally when base tables change. Define an MV on your most complex aggregation query — dashboards then hit the MV instead of scanning billions of rows. For partitioned tables, only changed partitions refresh. Replaces entire downstream ETL aggregation jobs.",
+      metric: "Zero ETL",
+      metricLabel: "for pre-aggregation layers",
+    },
+  ],
+};

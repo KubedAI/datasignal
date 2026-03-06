@@ -1,0 +1,74 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#050810"/>
+
+  <!-- Dot grid pattern -->
+  <defs>
+    <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#0F2040"/>
+    </pattern>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E25A1C" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#050810" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Left accent bar -->
+  <rect x="0" y="0" width="4" height="630" fill="url(#leftbar)"/>
+  <defs>
+    <linearGradient id="leftbar" x1="0" y1="0" x2="0" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E25A1C" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#E25A1C"/>
+      <stop offset="100%" stop-color="#E25A1C" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logo icon -->
+  <rect x="80" y="80" width="52" height="52" rx="14" fill="url(#logograd)"/>
+  <defs>
+    <linearGradient id="logograd" x1="80" y1="80" x2="132" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E25A1C"/>
+      <stop offset="100%" stop-color="#B83A0A"/>
+    </linearGradient>
+  </defs>
+  <path d="M110 88L96 106h8l-4 18 16-22h-8l-2-14z" fill="white"/>
+
+  <!-- Brand name -->
+  <text x="148" y="101" font-family="monospace" font-size="22" font-weight="800" fill="#F0F4FF" letter-spacing="3">DATA SIGNAL</text>
+  <text x="148" y="122" font-family="monospace" font-size="11" fill="#3A4A5E" letter-spacing="2">FIELD SIGNALS FROM PRODUCTION</text>
+
+  <!-- Main headline -->
+  <text x="80" y="270" font-family="monospace" font-size="64" font-weight="900" fill="#F0F4FF" letter-spacing="-2">Signals from</text>
+  <text x="80" y="345" font-family="monospace" font-size="64" font-weight="900" fill="#E25A1C" letter-spacing="-2">the Field</text>
+
+  <!-- Subtext -->
+  <text x="80" y="405" font-family="monospace" font-size="20" fill="#5A6A7E">Battle-tested learnings from real production data engineering.</text>
+  <text x="80" y="432" font-family="monospace" font-size="20" fill="#5A6A7E">No theory. No fluff. Just what actually works on Kubernetes.</text>
+
+  <!-- Framework pills -->
+  <rect x="80" y="490" width="140" height="36" rx="18" fill="#0A0F1E" stroke="#E25A1C" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="150" y="513" font-family="monospace" font-size="13" fill="#E25A1C" text-anchor="middle">⚡ Spark</text>
+
+  <rect x="236" y="490" width="120" height="36" rx="18" fill="#0A0F1E" stroke="#00C9FF" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="296" y="513" font-family="monospace" font-size="13" fill="#00C9FF" text-anchor="middle">Flink</text>
+
+  <rect x="372" y="490" width="120" height="36" rx="18" fill="#0A0F1E" stroke="#C751EE" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="432" y="513" font-family="monospace" font-size="13" fill="#C751EE" text-anchor="middle">Trino</text>
+
+  <rect x="508" y="490" width="150" height="36" rx="18" fill="#0A0F1E" stroke="#F5C400" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="583" y="513" font-family="monospace" font-size="13" fill="#F5C400" text-anchor="middle">StarRocks</text>
+
+  <rect x="674" y="490" width="140" height="36" rx="18" fill="#0A0F1E" stroke="#017CEE" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="744" y="513" font-family="monospace" font-size="13" fill="#017CEE" text-anchor="middle">Airflow</text>
+
+  <!-- Signal count -->
+  <text x="1120" y="513" font-family="monospace" font-size="13" fill="#2E3E56" text-anchor="end">datasignal.dev</text>
+
+  <!-- Decorative pulse rings -->
+  <circle cx="1100" cy="200" r="120" stroke="#E25A1C" stroke-opacity="0.05" stroke-width="1" fill="none"/>
+  <circle cx="1100" cy="200" r="80" stroke="#E25A1C" stroke-opacity="0.08" stroke-width="1" fill="none"/>
+  <circle cx="1100" cy="200" r="40" stroke="#E25A1C" stroke-opacity="0.15" stroke-width="1" fill="none"/>
+  <circle cx="1100" cy="200" r="8" fill="#E25A1C" opacity="0.6"/>
+</svg>
