@@ -1,0 +1,98 @@
+name: Submit a Signal
+description: Share a production tip or gotcha from running data frameworks on Kubernetes. We'll review and publish it on datasignal.dev with your name and GitHub handle.
+title: "[Signal] {Framework} — {Brief headline}"
+labels: ["signal-submission"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Share your production signal
+        Fill in the fields below. We review every submission and publish accepted signals on [datasignal.dev](https://datasignal.dev) with full credit to you.
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      description: Which framework does this signal apply to?
+      options:
+        - Apache Spark
+        - Apache Flink
+        - Trino
+        - StarRocks
+        - Apache Airflow
+        - Apache Kafka
+        - Celeborn
+        - Ray
+        - ClickHouse
+        - Apache Superset
+        - DataHub
+        - Gluten
+        - Apache DataFusion
+        - Spark RAPIDS
+    validations:
+      required: true
+
+  - type: input
+    id: tag
+    attributes:
+      label: Tag
+      description: Short topic label shown on the signal card
+      placeholder: "e.g. Memory, Cost, Storage, Scheduling, Performance"
+    validations:
+      required: true
+
+  - type: input
+    id: headline
+    attributes:
+      label: Headline
+      description: Bold one-liner — the core lesson in a single sentence
+      placeholder: "e.g. Always set spark.memory.offHeap.enabled=true for large joins"
+    validations:
+      required: true
+
+  - type: textarea
+    id: detail
+    attributes:
+      label: Detail
+      description: 2–4 sentences — what happens, why it happens, and what to do about it
+      placeholder: |
+        Describe the gotcha or tip, explain the root cause, and share the fix or best practice.
+        Be specific — include config names, version notes, or failure modes you've seen.
+    validations:
+      required: true
+
+  - type: input
+    id: metric
+    attributes:
+      label: Metric
+      description: Eye-catching stat that captures the impact
+      placeholder: "e.g. 3×   or   40%   or   2 min → 18 sec"
+    validations:
+      required: true
+
+  - type: input
+    id: metric_label
+    attributes:
+      label: Metric Label
+      description: One short phrase giving context to the metric
+      placeholder: "e.g. faster shuffle   or   memory reduction   or   job time"
+    validations:
+      required: true
+
+  - type: input
+    id: name
+    attributes:
+      label: Your name
+      description: How you'd like to be credited on the site
+      placeholder: "e.g. Jane Smith"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Contribution agreement
+      options:
+        - label: I agree that this signal may be edited for clarity and published on datasignal.dev with my name and GitHub handle as credit.
+          required: true

@@ -79,10 +79,10 @@ export default function App() {
           }}
         >
           <div style={{ flexShrink: 0 }}>
-            <LogoMark size={30} />
+            <LogoMark size={38} />
           </div>
           <div style={{ textAlign: "left" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.08em", color: "#F0F4FF", fontFamily: "'JetBrains Mono', monospace" }}>
+            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "0.08em", color: "#F0F4FF", fontFamily: "'JetBrains Mono', monospace" }}>
               DATA SIGNAL
             </div>
             <div style={{ fontSize: 9, color: "#5A7090", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'JetBrains Mono', monospace" }}>

@@ -165,6 +165,56 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
           </div>
         </div>
       )}
+
+      {/* Submit a Signal CTA */}
+      <div style={{
+        maxWidth: 660, marginTop: 32,
+        padding: "20px 24px", borderRadius: 14,
+        background: "#07090F",
+        border: "1px solid #1A2540",
+        borderLeft: `3px solid ${color}60`,
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20,
+      }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 9, flexShrink: 0, marginTop: 1,
+            background: `${color}12`, border: `1px solid ${color}30`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif", marginBottom: 4 }}>
+              Got a {fw.name} signal?
+            </div>
+            <div style={{ fontSize: 11, color: "#3A4A5E", lineHeight: 1.6, fontFamily: "'Space Grotesk', sans-serif" }}>
+              Share a production tip or gotcha. We review every submission and publish it with your name and GitHub handle.
+            </div>
+          </div>
+        </div>
+        <a
+          href={`https://github.com/KubedAI/datasignal/issues/new?template=signal-submission.yml&title=[Signal]+${encodeURIComponent(fw.name)}+—+`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            flexShrink: 0,
+            padding: "9px 18px", borderRadius: 9,
+            background: `${color}15`, border: `1px solid ${color}40`,
+            color: color, fontSize: 12, fontWeight: 700,
+            letterSpacing: "0.04em", textDecoration: "none",
+            fontFamily: "'Space Grotesk', sans-serif",
+            whiteSpace: "nowrap",
+            transition: "background 0.2s",
+          }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = `${color}28`)}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = `${color}15`)}
+        >
+          Submit a Signal →
+        </a>
+      </div>
     </main>
   );
 }
