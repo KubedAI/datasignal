@@ -113,7 +113,7 @@ export default function App() {
         {/* Nav right */}
         <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
           <a
-            href={`${import.meta.env.BASE_URL}about`}
+            href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/about`}
             style={{
               fontSize: 12, color: "#4A5A72", letterSpacing: "0.04em",
               textTransform: "uppercase", textDecoration: "none",

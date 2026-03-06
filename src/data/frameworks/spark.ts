@@ -15,6 +15,7 @@ export const spark: Framework = {
       detail: "Local NVMe SSD (r6id, m6id, i3en) delivers 10–20x faster shuffle than gp3 EBS. Zero network hops means shuffle-heavy TPC-DS queries finish 40–60% faster. Karpenter provisions NVMe nodes on-demand — no pre-warming, no pre-provisioned node groups needed.",
       metric: "10–20×",
       metricLabel: "vs EBS shuffle",
+      light: "green",
     },
     {
       id: 2,
@@ -39,6 +40,7 @@ export const spark: Framework = {
       detail: "Spark with checkpointing tolerates Spot interruptions gracefully. Run executors on Spot (c6i, m6i Spot pools) and keep only the driver on On-Demand via a separate Karpenter NodePool. Karpenter handles Spot rebalancing automatically. Typical savings: 60–70% on compute.",
       metric: "60–70%",
       metricLabel: "compute cost savings",
+      light: "yellow",
     },
     {
       id: 5,
@@ -79,6 +81,7 @@ export const spark: Framework = {
       detail: "Kubernetes default scheduler uses 'least allocated' — spreading pods evenly. For Spark this wastes nodes. 'Most allocated' (bin-packing) fills nodes before opening new ones. YuniKorn and Volcano both implement bin-packing natively. Result: 30% fewer nodes, proportionally lower cluster cost.",
       metric: "−30%",
       metricLabel: "nodes needed for same job",
+      light: "green",
     },
     {
       id: 10,

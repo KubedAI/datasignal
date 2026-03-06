@@ -3,3 +3,10 @@ dist/
 .DS_Store
 *.env
 .env.*
+
+# Claude / AI assistant files
+CLAUDE.md
+.claude/
+
+# Astro generated (auto-rebuilt on install)
+.astro/

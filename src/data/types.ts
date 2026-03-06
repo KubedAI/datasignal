@@ -1,3 +1,8 @@
+// green = recommended production practice
+// yellow = use carefully / context-dependent
+// red = anti-pattern / don't do this
+export type SignalLight = "green" | "yellow" | "red";
+
 export type Signal = {
   id: number;
   tag: string;
@@ -5,6 +10,7 @@ export type Signal = {
   detail: string;
   metric: string;
   metricLabel: string;
+  light?: SignalLight;
 };
 
 export type FrameworkCategory =

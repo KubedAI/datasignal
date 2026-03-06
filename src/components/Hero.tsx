@@ -99,6 +99,30 @@ export default function Hero({ onSelect }: Props) {
           No theory. No fluff. Just what actually works.
         </p>
 
+        {/* Traffic light legend */}
+        <div style={{
+          display: "inline-flex", gap: 16, marginBottom: 28,
+          padding: "10px 20px", borderRadius: 12,
+          background: "#0A0F1E", border: "1px solid #1A2540",
+        }}>
+          {([
+            { color: "#22C55E", label: "Good to do" },
+            { color: "#F59E0B", label: "Apply carefully" },
+            { color: "#EF4444", label: "Avoid in production" },
+          ] as const).map(({ color, label }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: color, boxShadow: `0 0 8px ${color}`,
+                animation: "blink 2.5s ease-in-out infinite",
+              }} />
+              <span style={{ fontSize: 10, color: "#6B8099", fontFamily: "'JetBrains Mono', monospace" }}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
         {/* Stats */}
         <div style={{
           display: "inline-flex", gap: 0, marginBottom: 48,

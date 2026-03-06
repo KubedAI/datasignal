@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Framework, Signal } from "../data/tips";
 import ShareSheet from "./ShareSheet";
+import TrafficLight from "./TrafficLight";
 
 type Props = {
   signal: Signal;
@@ -72,15 +73,18 @@ export default function SignalCard({ signal, framework: fw, total, index, onNext
         {/* Content */}
         <div style={{ position: "relative", zIndex: 1, padding: "28px 32px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
 
-          {/* Top row: tag + counter + share */}
+          {/* Top row: tag + traffic light + counter + share */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-            <span style={{
-              padding: "4px 12px", borderRadius: 6,
-              background: `${color}14`, border: `1px solid ${color}35`,
-              fontSize: 10, fontWeight: 700, color: color,
-              letterSpacing: "0.12em", textTransform: "uppercase",
-              fontFamily: "'JetBrains Mono', monospace",
-            }}>{signal.tag}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{
+                padding: "4px 12px", borderRadius: 6,
+                background: `${color}14`, border: `1px solid ${color}35`,
+                fontSize: 10, fontWeight: 700, color: color,
+                letterSpacing: "0.12em", textTransform: "uppercase",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}>{signal.tag}</span>
+              {signal.light && <TrafficLight light={signal.light} size="sm" />}
+            </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 11, color: "#2E3E56", fontFamily: "'JetBrains Mono', monospace" }}>

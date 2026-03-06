@@ -39,6 +39,7 @@ export const flink: Framework = {
       detail: "Flink's network stack uses credit-based flow control. When a downstream operator is slow, upstream buffers data in off-heap managed memory — not the JVM heap. Disabling this fills the heap and triggers OOM. Nearly every OOM issue in Flink streaming traces back to flow control being disabled or misconfigured.",
       metric: "0 OOM",
       metricLabel: "with credit-flow enabled",
+      light: "red",
     },
     {
       id: 5,
