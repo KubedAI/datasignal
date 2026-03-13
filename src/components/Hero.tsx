@@ -4,9 +4,10 @@ import TrafficLight from "./TrafficLight";
 
 type Props = {
   onSelect: (id: string) => void;
+  isMobile?: boolean;
 };
 
-export default function Hero({ onSelect }: Props) {
+export default function Hero({ onSelect, isMobile = false }: Props) {
   const totalSignals = FRAMEWORKS.reduce((sum, f) => sum + f.signals.length, 0);
 
   return (
@@ -55,7 +56,7 @@ export default function Hero({ onSelect }: Props) {
         minHeight: "100%",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        padding: "48px 48px 56px",
+        padding: isMobile ? "32px 20px 40px" : "48px 48px 56px",
         position: "relative", zIndex: 1,
       }}>
 
@@ -67,7 +68,7 @@ export default function Hero({ onSelect }: Props) {
           display: "inline-flex", alignItems: "center", gap: 8,
           padding: "5px 14px", borderRadius: 20,
           background: "#0A0F1E", border: "1px solid #1A2540",
-          marginBottom: 32,
+          marginBottom: isMobile ? 20 : 32,
         }}>
           <div style={{
             width: 6, height: 6, borderRadius: "50%",
@@ -75,15 +76,15 @@ export default function Hero({ onSelect }: Props) {
             boxShadow: "0 0 10px #E25A1C",
             animation: "blink 2s ease-in-out infinite",
           }} />
-          <span style={{ fontSize: 10, color: "#6B8099", letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace" }}>
+          <span style={{ fontSize: isMobile ? 9 : 10, color: "#6B8099", letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace" }}>
             DATA SIGNAL / PRODUCTION INSIGHTS
           </span>
         </div>
 
         {/* Headline */}
         <h1 style={{
-          fontSize: 52, fontWeight: 700, lineHeight: 1.05,
-          letterSpacing: "-0.03em", margin: "0 0 20px",
+          fontSize: isMobile ? 34 : 52, fontWeight: 700, lineHeight: 1.05,
+          letterSpacing: "-0.03em", margin: "0 0 16px",
           fontFamily: "'Space Grotesk', sans-serif",
           background: "linear-gradient(135deg, #F0F4FF 30%, #8A9CB0 100%)",
           WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
@@ -93,21 +94,22 @@ export default function Hero({ onSelect }: Props) {
 
         {/* Subtext */}
         <p style={{
-          fontSize: 15, color: "#5A6A7E", lineHeight: 1.75,
-          marginBottom: 40, fontFamily: "'Space Grotesk', sans-serif",
+          fontSize: isMobile ? 13 : 15, color: "#5A6A7E", lineHeight: 1.75,
+          marginBottom: isMobile ? 28 : 40, fontFamily: "'Space Grotesk', sans-serif",
         }}>
           Real learnings from running data and AI workloads on Kubernetes at scale.<br />
           No theory. No fluff. Just what works in production.
         </p>
 
         {/* Animated traffic light legend */}
-        <div style={{ marginBottom: 28 }}>
-          <TrafficLight animate={true} bulb={72} />
+        <div style={{ marginBottom: isMobile ? 20 : 28 }}>
+          <TrafficLight animate={true} bulb={isMobile ? 56 : 72} />
         </div>
 
         {/* Stats */}
         <div style={{
-          display: "inline-flex", gap: 0, marginBottom: 48,
+          display: "flex", flexWrap: "wrap", justifyContent: "center",
+          marginBottom: isMobile ? 28 : 48,
           background: "#0A0F1E", border: "1px solid #1A2540", borderRadius: 12, overflow: "hidden",
         }}>
           {[
@@ -118,13 +120,14 @@ export default function Hero({ onSelect }: Props) {
             { value: "Kubernetes", label: "Platform" },
           ].map((stat, i, arr) => (
             <div key={i} style={{
-              padding: "16px 28px", textAlign: "center",
+              padding: isMobile ? "12px 16px" : "16px 28px", textAlign: "center",
               borderRight: i < arr.length - 1 ? "1px solid #1A2540" : "none",
+              minWidth: isMobile ? "33%" : "auto",
             }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ fontSize: isMobile ? 17 : 22, fontWeight: 700, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace" }}>
                 {stat.value}
               </div>
-              <div style={{ fontSize: 10, color: "#5A7090", letterSpacing: "0.1em", marginTop: 3, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ fontSize: isMobile ? 9 : 10, color: "#5A7090", letterSpacing: "0.1em", marginTop: 3, fontFamily: "'JetBrains Mono', monospace" }}>
                 {stat.label}
               </div>
             </div>
@@ -134,16 +137,16 @@ export default function Hero({ onSelect }: Props) {
         {/* Framework selector grid */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 10, maxWidth: 720, margin: "0 auto",
+          gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+          gap: isMobile ? 8 : 10, maxWidth: 720, margin: "0 auto",
         }}>
           {FRAMEWORKS.map(f => (
             <button
               key={f.id}
               onClick={() => onSelect(f.id)}
               style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "13px 14px", borderRadius: 12, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: isMobile ? 8 : 10,
+                padding: isMobile ? "11px 10px" : "13px 14px", borderRadius: 12, cursor: "pointer",
                 background: "#0A0F1E",
                 border: `1px solid ${f.color}25`,
                 textAlign: "left", transition: "all 0.22s",
@@ -165,51 +168,55 @@ export default function Hero({ onSelect }: Props) {
               }}
             >
               <div style={{
-                width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                width: isMobile ? 28 : 34, height: isMobile ? 28 : 34, borderRadius: 8, flexShrink: 0,
                 background: `${f.color}18`, border: `1px solid ${f.color}35`,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                {getFrameworkIcon(f.id, 18)}
+                {getFrameworkIcon(f.id, isMobile ? 15 : 18)}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif" }}>
+                <div style={{ fontSize: isMobile ? 11 : 13, fontWeight: 600, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {f.name}
                 </div>
-                <div style={{ fontSize: 10, color: f.color + "AA", marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+                <div style={{ fontSize: isMobile ? 9 : 10, color: f.color + "AA", marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
                   {f.signals.length} signals
                 </div>
               </div>
-              <div style={{
-                position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
-                fontSize: 16, color: f.color + "60",
-              }}>→</div>
+              {!isMobile && (
+                <div style={{
+                  position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
+                  fontSize: 16, color: f.color + "60",
+                }}>→</div>
+              )}
             </button>
           ))}
         </div>
+
         {/* Author card */}
         <div style={{
-          marginTop: 48, display: "inline-flex", alignItems: "center", gap: 16,
-          padding: "18px 24px", borderRadius: 16,
+          marginTop: isMobile ? 32 : 48, display: "inline-flex", alignItems: "center", gap: isMobile ? 12 : 16,
+          padding: isMobile ? "14px 16px" : "18px 24px", borderRadius: 16,
           background: "#0A0F1E", border: "1px solid #1A2540",
           boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+          textAlign: "left",
         }}>
           <img
             src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/vara-linkedin.jpeg`}
             alt="Vara Bonthu"
             style={{
-              width: 56, height: 56, borderRadius: "50%",
+              width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: "50%",
               objectFit: "cover", objectPosition: "center top",
               border: "2px solid #E25A1C50", flexShrink: 0,
             }}
           />
           <div style={{ textAlign: "left" }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif" }}>
+            <div style={{ fontSize: isMobile ? 13 : 15, fontWeight: 700, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif" }}>
               Vara Bonthu
             </div>
-            <div style={{ fontSize: 11, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+            <div style={{ fontSize: isMobile ? 10 : 11, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
               Data and AI on Kubernetes
             </div>
-            <div style={{ fontSize: 11, color: "#5A6A7E", fontFamily: "'Space Grotesk', sans-serif", marginTop: 3 }}>
+            <div style={{ fontSize: isMobile ? 10 : 11, color: "#5A6A7E", fontFamily: "'Space Grotesk', sans-serif", marginTop: 3 }}>
               Principal Open Source Solutions Architect · AWS
             </div>
             <a

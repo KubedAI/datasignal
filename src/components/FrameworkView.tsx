@@ -7,9 +7,10 @@ type Props = {
   framework: Framework;
   initialSignal?: number;
   onSignalChange?: (index: number) => void;
+  isMobile?: boolean;
 };
 
-export default function FrameworkView({ framework: fw, initialSignal = 0, onSignalChange }: Props) {
+export default function FrameworkView({ framework: fw, initialSignal = 0, onSignalChange, isMobile = false }: Props) {
   const [cardIndex, setCardIndex] = useState(Math.min(initialSignal, fw.signals.length - 1));
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const color = fw.color;
@@ -35,31 +36,31 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
   }, [fw.id]);
 
   return (
-    <main style={{ flex: 1, padding: "36px 48px", overflowY: "auto", minWidth: 0 }}>
+    <main style={{ flex: 1, padding: isMobile ? "20px 16px" : "36px 48px", overflowY: "auto", minWidth: 0 }}>
 
       {/* Framework header */}
-      <div style={{ marginBottom: 36 }}>
-        <div style={{ fontSize: 10, color: "#2E3E56", marginBottom: 12, letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ marginBottom: isMobile ? 20 : 36 }}>
+        <div style={{ fontSize: 10, color: "#2E3E56", marginBottom: isMobile ? 8 : 12, letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace" }}>
           SIGNALS &nbsp;/&nbsp; <span style={{ color: color }}>{fw.name.toUpperCase()}</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
-              width: 50, height: 50, borderRadius: 14, flexShrink: 0,
+              width: isMobile ? 40 : 50, height: isMobile ? 40 : 50, borderRadius: 14, flexShrink: 0,
               background: `${color}14`, border: `1px solid ${color}40`,
               display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: `0 0 24px ${color}25`,
             }}>
-              {getFrameworkIcon(fw.id, 28)}
+              {getFrameworkIcon(fw.id, isMobile ? 22 : 28)}
             </div>
             <div>
               <h1 style={{
-                fontSize: 28, fontWeight: 700, color: "#F0F4FF",
+                fontSize: isMobile ? 20 : 28, fontWeight: 700, color: "#F0F4FF",
                 letterSpacing: "-0.02em", lineHeight: 1.1,
                 fontFamily: "'Space Grotesk', sans-serif", margin: 0,
               }}>{fw.name}</h1>
-              <p style={{ fontSize: 13, color: "#4A5A72", marginTop: 4, fontFamily: "'Space Grotesk', sans-serif" }}>
+              <p style={{ fontSize: isMobile ? 11 : 13, color: "#4A5A72", marginTop: 4, fontFamily: "'Space Grotesk', sans-serif" }}>
                 {fw.tagline}
               </p>
             </div>
@@ -68,11 +69,11 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
           {/* Signal counter badge */}
           <div style={{
             background: "#0A0F1E", border: `1px solid ${color}30`,
-            borderRadius: 12, padding: "10px 18px", textAlign: "center", flexShrink: 0,
+            borderRadius: 12, padding: isMobile ? "8px 14px" : "10px 18px", textAlign: "center", flexShrink: 0,
           }}>
-            <div style={{ fontSize: 26, fontWeight: 700, color: color, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+            <div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: color, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
               {clampedIndex + 1}
-              <span style={{ fontSize: 14, color: "#2E3E56" }}>/{visibleSignals.length}</span>
+              <span style={{ fontSize: isMobile ? 11 : 14, color: "#2E3E56" }}>/{visibleSignals.length}</span>
             </div>
             <div style={{ fontSize: 9, color: "#2E3E56", letterSpacing: "0.1em", marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
               SIGNAL
@@ -82,11 +83,11 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
       </div>
 
       {/* Tag filter chips */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 28 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: isMobile ? 18 : 28 }}>
         <button
           onClick={() => { setActiveTag(null); setIndex(0); }}
           style={{
-            padding: "5px 14px", borderRadius: 20, cursor: "pointer",
+            padding: "5px 12px", borderRadius: 20, cursor: "pointer",
             background: activeTag === null ? `${color}18` : "#0A0F1E",
             border: `1px solid ${activeTag === null ? color + "50" : "#1A2540"}`,
             color: activeTag === null ? color : "#3A4A5E",
@@ -103,7 +104,7 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
               key={tag}
               onClick={() => { setActiveTag(isActive ? null : tag); setIndex(0); }}
               style={{
-                padding: "5px 14px", borderRadius: 20, cursor: "pointer",
+                padding: "5px 12px", borderRadius: 20, cursor: "pointer",
                 background: isActive ? `${color}18` : "#0A0F1E",
                 border: `1px solid ${isActive ? color + "50" : "#1A2540"}`,
                 color: isActive ? color : "#3A4A5E",
@@ -137,6 +138,7 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
             index={clampedIndex}
             onNext={() => setIndex(Math.min(clampedIndex + 1, visibleSignals.length - 1))}
             onPrev={() => setIndex(Math.max(clampedIndex - 1, 0))}
+            isMobile={isMobile}
           />
         )}
       </div>
@@ -160,7 +162,7 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
               All {fw.name} signals reviewed
             </div>
             <div style={{ fontSize: 11, color: "#3A4A5E", marginTop: 2, fontFamily: "'Space Grotesk', sans-serif" }}>
-              Pick another framework from the left or share this one.
+              {isMobile ? "Tap ← All above to pick another framework." : "Pick another framework from the left or share this one."}
             </div>
           </div>
         </div>
@@ -169,11 +171,13 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
       {/* Submit a Signal CTA */}
       <div style={{
         maxWidth: 660, marginTop: 32,
-        padding: "20px 24px", borderRadius: 14,
+        padding: isMobile ? "16px 16px" : "20px 24px", borderRadius: 14,
         background: "#07090F",
         border: "1px solid #1A2540",
         borderLeft: `3px solid ${color}60`,
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20,
+        display: "flex", alignItems: isMobile ? "flex-start" : "center",
+        justifyContent: "space-between", gap: 16,
+        flexDirection: isMobile ? "column" : "row",
       }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
           <div style={{
@@ -208,6 +212,8 @@ export default function FrameworkView({ framework: fw, initialSignal = 0, onSign
             fontFamily: "'Space Grotesk', sans-serif",
             whiteSpace: "nowrap",
             transition: "background 0.2s",
+            alignSelf: isMobile ? "stretch" : "auto",
+            textAlign: "center",
           }}
           onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = `${color}28`)}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = `${color}15`)}
