@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FRAMEWORKS } from "../data/tips";
 import { getFrameworkIcon } from "./FrameworkIcon";
 import TrafficLight from "./TrafficLight";
@@ -8,7 +9,185 @@ type Props = {
 };
 
 export default function Hero({ onSelect, isMobile = false }: Props) {
+  const [showPicker, setShowPicker] = useState(true);
   const totalSignals = FRAMEWORKS.reduce((sum, f) => sum + f.signals.length, 0);
+
+  if (showPicker) {
+    const day2Href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/day2`;
+    return (
+      <main style={{ flex: 1, overflow: "auto", position: "relative" }}>
+        {/* Grid background */}
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none",
+          backgroundImage: `linear-gradient(#0F2040 1px, transparent 1px), linear-gradient(90deg, #0F2040 1px, transparent 1px)`,
+          backgroundSize: "48px 48px",
+          maskImage: "radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 100%)",
+        }} />
+        <div style={{
+          minHeight: "100%", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          padding: isMobile ? "32px 20px 48px" : "56px 48px 64px",
+          position: "relative", zIndex: 1,
+        }}>
+          <div style={{ textAlign: "center", maxWidth: 760, width: "100%" }}>
+
+            {/* Badge */}
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "5px 14px", borderRadius: 20,
+              background: "#0A0F1E", border: "1px solid #1A2540",
+              marginBottom: isMobile ? 20 : 28,
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E25A1C", boxShadow: "0 0 10px #E25A1C", animation: "blink 2s ease-in-out infinite" }} />
+              <span style={{ fontSize: isMobile ? 9 : 10, color: "#6B8099", letterSpacing: "0.12em", fontFamily: "'JetBrains Mono', monospace" }}>
+                DATA SIGNAL / PRODUCTION INSIGHTS
+              </span>
+            </div>
+
+            {/* Headline */}
+            <h1 style={{
+              fontSize: isMobile ? 32 : 50, fontWeight: 700, lineHeight: 1.05,
+              letterSpacing: "-0.03em", margin: "0 0 14px",
+              fontFamily: "'Space Grotesk', sans-serif",
+              background: "linear-gradient(135deg, #F0F4FF 30%, #8A9CB0 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>
+              Signals from<br />the Field
+            </h1>
+
+            <p style={{ fontSize: isMobile ? 13 : 15, color: "#5A6A7E", lineHeight: 1.75, marginBottom: isMobile ? 32 : 48, fontFamily: "'Space Grotesk', sans-serif" }}>
+              Real learnings from running data and AI workloads on Kubernetes at scale.<br />
+              No theory. No fluff. Just what works in production.
+            </p>
+
+            {/* Day picker cards */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+              gap: isMobile ? 12 : 16,
+              marginBottom: isMobile ? 32 : 48,
+            }}>
+
+              {/* Day 1 */}
+              <button
+                onClick={() => setShowPicker(false)}
+                style={{
+                  background: "#0A0F1E", border: "1px solid #E25A1C28",
+                  borderRadius: 16, padding: isMobile ? "24px 20px" : "28px 28px",
+                  cursor: "pointer", textAlign: "left",
+                  transition: "all 0.22s",
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = "#E25A1C0A";
+                  el.style.borderColor = "#E25A1C55";
+                  el.style.transform = "translateY(-3px)";
+                  el.style.boxShadow = "0 12px 40px #E25A1C18";
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = "#0A0F1E";
+                  el.style.borderColor = "#E25A1C28";
+                  el.style.transform = "none";
+                  el.style.boxShadow = "none";
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{
+                    fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700,
+                    color: "#E25A1C", background: "#E25A1C15", border: "1px solid #E25A1C30",
+                    borderRadius: 5, padding: "2px 8px", letterSpacing: "0.08em",
+                  }}>DAY 1</div>
+                  <div style={{ fontSize: isMobile ? 9 : 10, color: "#2E3E56", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em" }}>Field Signals</div>
+                </div>
+                <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: "#D0D8E8", marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.02em" }}>
+                  Tips &amp; Gotchas
+                </div>
+                <p style={{ fontSize: isMobile ? 12 : 13, color: "#4A5A72", lineHeight: 1.65, marginBottom: 16, fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Production tuning insights, failure patterns, and configuration gotchas for data frameworks on Kubernetes.
+                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <span style={{ fontSize: 11, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace" }}>{totalSignals} signals</span>
+                    <span style={{ fontSize: 11, color: "#3A4A5E", fontFamily: "'JetBrains Mono', monospace" }}>{FRAMEWORKS.length} frameworks</span>
+                  </div>
+                  <span style={{ fontSize: 18, color: "#E25A1C60" }}>→</span>
+                </div>
+              </button>
+
+              {/* Day 2 */}
+              <a
+                href={day2Href}
+                style={{
+                  background: "#0A0F1E", border: "1px solid #00C9FF22",
+                  borderRadius: 16, padding: isMobile ? "24px 20px" : "28px 28px",
+                  textDecoration: "none", display: "block", textAlign: "left",
+                  transition: "all 0.22s",
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = "#00C9FF08";
+                  el.style.borderColor = "#00C9FF44";
+                  el.style.transform = "translateY(-3px)";
+                  el.style.boxShadow = "0 12px 40px #00C9FF10";
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = "#0A0F1E";
+                  el.style.borderColor = "#00C9FF22";
+                  el.style.transform = "none";
+                  el.style.boxShadow = "none";
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{
+                    fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 700,
+                    color: "#00C9FF", background: "#00C9FF12", border: "1px solid #00C9FF30",
+                    borderRadius: 5, padding: "2px 8px", letterSpacing: "0.08em",
+                  }}>DAY 2</div>
+                  <div style={{ fontSize: isMobile ? 9 : 10, color: "#2E3E56", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.06em" }}>Production Operations</div>
+                </div>
+                <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: "#D0D8E8", marginBottom: 8, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: "-0.02em" }}>
+                  Deploy &amp; Operate
+                </div>
+                <p style={{ fontSize: isMobile ? 12 : 13, color: "#4A5A72", lineHeight: 1.65, marginBottom: 16, fontFamily: "'Space Grotesk', sans-serif" }}>
+                  End-to-end deployment guides for production — architecture, storage, autoscaling, upgrades, and operations runbooks.
+                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <span style={{ fontSize: 11, color: "#00C9FF", fontFamily: "'JetBrains Mono', monospace" }}>1 guide</span>
+                    <span style={{ fontSize: 11, color: "#3A4A5E", fontFamily: "'JetBrains Mono', monospace" }}>more coming</span>
+                  </div>
+                  <span style={{ fontSize: 18, color: "#00C9FF50" }}>→</span>
+                </div>
+              </a>
+
+            </div>
+
+            {/* Author card */}
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: isMobile ? 12 : 16,
+              padding: isMobile ? "14px 16px" : "18px 24px", borderRadius: 16,
+              background: "#0A0F1E", border: "1px solid #1A2540",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.4)", textAlign: "left",
+            }}>
+              <img
+                src={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/vara-linkedin.jpeg`}
+                alt="Vara Bonthu"
+                style={{ width: isMobile ? 44 : 52, height: isMobile ? 44 : 52, borderRadius: "50%", objectFit: "cover", objectPosition: "center top", border: "2px solid #E25A1C50", flexShrink: 0 }}
+              />
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: "#D0D8E8", fontFamily: "'Space Grotesk', sans-serif" }}>Vara Bonthu</div>
+                <div style={{ fontSize: isMobile ? 10 : 11, color: "#E25A1C", fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>Data and AI on Kubernetes</div>
+                <div style={{ fontSize: isMobile ? 10 : 11, color: "#5A6A7E", fontFamily: "'Space Grotesk', sans-serif", marginTop: 2 }}>Principal Open Source Solutions Architect · AWS</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main style={{

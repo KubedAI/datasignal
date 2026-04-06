@@ -1,0 +1,168 @@
+---
+/**
+ * Shared top nav for all Astro pages.
+ * Pass current="signals"|"day2"|"about" to highlight the active tab.
+ */
+interface Props {
+  current?: "signals" | "day2" | "about";
+}
+const { current } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const tabs = [
+  { id: "signals", label: "Signals",  href: `${base}/`       },
+  { id: "day2",    label: "Day 2",    href: `${base}/day2`    },
+  { id: "about",   label: "About",    href: `${base}/about`   },
+] as const;
+---
+
+<nav class="sitenav">
+  <!-- Logo -->
+  <a href={`${base}/`} class="sitenav-logo">
+    <svg width="32" height="32" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="30" height="30" rx="8" fill="#070D1C"/>
+      <rect width="30" height="30" rx="8" fill="url(#sngrad)"/>
+      <rect x="0.5" y="0.5" width="29" height="29" rx="7.5" stroke="#E25A1C" stroke-opacity="0.35" stroke-width="1" fill="none"/>
+      <line x1="2" y1="15" x2="28" y2="15" stroke="#1A2A40" stroke-width="0.5"/>
+      <polyline points="2,15 7,15 8.5,9 10,21 11.5,7 13,21 14.5,15 28,15"
+        stroke="#E25A1C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.15"/>
+      <polyline points="2,15 7,15 8.5,9 10,21 11.5,7 13,21 14.5,15 28,15"
+        stroke="#E25A1C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="28" cy="15" r="1.2" fill="#E25A1C" opacity="0.9"/>
+      <defs>
+        <linearGradient id="sngrad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#0D1A30"/>
+          <stop offset="100%" stop-color="#070D1C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="sitenav-wordmark">
+      <span class="sitenav-title">DATA SIGNAL</span>
+      <span class="sitenav-sub">Field Signals from Production</span>
+    </div>
+  </a>
+
+  <!-- Tabs -->
+  <div class="sitenav-tabs">
+    {tabs.map(tab => (
+      <a
+        href={tab.href}
+        class={`sitenav-tab${current === tab.id ? ' active' : ''}`}
+      >
+        {tab.id === 'day2' && <span class="tab-badge">2</span>}
+        {tab.label}
+      </a>
+    ))}
+  </div>
+</nav>
+
+<style>
+  .sitenav {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    height: 56px;
+    padding: 0 28px;
+    background: rgba(5, 8, 16, 0.97);
+    border-bottom: 1px solid #0F1829;
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .sitenav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .sitenav-wordmark {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sitenav-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #F0F4FF;
+    white-space: nowrap;
+  }
+
+  .sitenav-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: #2E3E56;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .sitenav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sitenav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #4A5A72;
+    text-decoration: none;
+    padding: 5px 12px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    transition: color 0.18s, background 0.18s, border-color 0.18s;
+    white-space: nowrap;
+  }
+
+  .sitenav-tab:hover:not(.active) {
+    color: #8A9CB0;
+    background: #0A0F1E;
+    border-color: #1A2540;
+  }
+
+  .sitenav-tab.active {
+    color: #F0F4FF;
+    background: #E25A1C14;
+    border-color: #E25A1C32;
+  }
+
+  .tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    background: #E25A1C22;
+    border: 1px solid #E25A1C40;
+    font-size: 8px;
+    font-weight: 700;
+    color: #E25A1C;
+    line-height: 1;
+  }
+
+  .sitenav-tab.active .tab-badge {
+    background: #E25A1C30;
+    border-color: #E25A1C60;
+  }
+
+  @media (max-width: 480px) {
+    .sitenav { padding: 0 16px; }
+    .sitenav-sub { display: none; }
+    .sitenav-title { font-size: 12px; }
+    .sitenav-tab { font-size: 10px; padding: 4px 8px; }
+  }
+</style>

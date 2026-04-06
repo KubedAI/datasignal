@@ -1,0 +1,925 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apache Celeborn on Kubernetes — Production Guide · Data Signal</title>
+<meta name="description" content="Field guide for deploying, scaling, and operating Apache Celeborn as a Remote Shuffle Service on Amazon EKS.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #1c2128; --bg4: #21262d;
+    --border: #30363d; --border2: #3d444d;
+    --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
+    --accent: #f0883e; --accent2: #ffa657;
+    --blue: #58a6ff; --green: #3fb950; --red: #f85149;
+    --yellow: #d29922; --purple: #bc8cff; --teal: #39d0d8;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --sitenav: 56px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+
+  /* ── SITE NAV ── */
+  .site-nav {
+    position: fixed; left: 0; right: 0; top: 0; height: var(--sitenav);
+    background: rgba(5,8,16,0.97); border-bottom: 1px solid #0F1829;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; z-index: 200; backdrop-filter: blur(12px);
+  }
+  .site-nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .site-nav-back {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #4A5A72;
+    letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
+    transition: color 0.2s; white-space: nowrap;
+  }
+  .site-nav-back:hover { color: #F0F4FF; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed; left: 0; top: var(--sitenav); bottom: 0;
+    width: 260px; background: var(--bg2); border-right: 1px solid var(--border);
+    overflow-y: auto; z-index: 100; padding: 0 0 40px 0;
+  }
+  .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .sidebar-logo .logo-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #f0883e22, #ffa65711);
+    border: 1px solid var(--accent); border-radius: 6px; padding: 6px 10px; margin-bottom: 10px;
+  }
+  .sidebar-logo .logo-badge span { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 0.05em; }
+  .sidebar-logo h1 { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .sidebar-logo p { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
+  .nav-section { padding: 8px 0; }
+  .nav-section-title { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); padding: 6px 20px 4px; }
+  .nav-link {
+    display: flex; align-items: center; gap: 8px; padding: 6px 20px;
+    font-size: 13px; color: var(--text2); text-decoration: none;
+    border-left: 2px solid transparent; transition: all 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--bg3); border-left-color: var(--accent); }
+  .nav-link.active { color: var(--accent); border-left-color: var(--accent); background: #f0883e0d; }
+  .nav-link .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+
+  /* ── MAIN ── */
+  .main { margin-left: 260px; min-height: 100vh; padding-top: var(--sitenav); }
+
+  /* ── HERO ── */
+  .hero { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 64px 60px 48px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -80px; right: -80px; width: 400px; height: 400px; background: radial-gradient(circle, #f0883e18 0%, transparent 70%); pointer-events: none; }
+  .hero::after { content: ''; position: absolute; bottom: -60px; left: 200px; width: 300px; height: 300px; background: radial-gradient(circle, #58a6ff0d 0%, transparent 70%); pointer-events: none; }
+  .hero-eyebrow { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .hero h2 { font-size: 36px; font-weight: 700; line-height: 1.2; color: var(--text); margin-bottom: 16px; letter-spacing: -0.02em; }
+  .hero h2 span { color: var(--accent); }
+  .hero-desc { font-size: 16px; color: var(--text2); max-width: 640px; line-height: 1.7; margin-bottom: 28px; }
+  .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-family: var(--mono); font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 1px solid; }
+  .tag-orange { color: var(--accent); border-color: #f0883e44; background: #f0883e0d; }
+  .tag-blue   { color: var(--blue);   border-color: #58a6ff44; background: #58a6ff0d; }
+  .tag-green  { color: var(--green);  border-color: #3fb95044; background: #3fb9500d; }
+  .tag-purple { color: var(--purple); border-color: #bc8cff44; background: #bc8cff0d; }
+  .tag-teal   { color: var(--teal);   border-color: #39d0d844; background: #39d0d80d; }
+
+  /* ── CONTENT ── */
+  .content { padding: 48px 60px; max-width: 900px; }
+  .section { margin-bottom: 64px; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .section-number { font-family: var(--mono); font-size: 11px; color: var(--accent); background: #f0883e11; border: 1px solid #f0883e33; border-radius: 4px; padding: 2px 8px; flex-shrink: 0; }
+  .section-header h2 { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+  p { color: var(--text2); margin-bottom: 16px; }
+  strong { color: var(--text); font-weight: 600; }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch-diagram { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 32px; margin: 24px 0; }
+  .arch-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: stretch; }
+  .arch-arrow { display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 18px; padding: 0 4px; }
+  .arch-box { flex: 1; border-radius: 8px; padding: 16px; border: 1px solid; text-align: center; }
+  .arch-box .box-title { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .arch-box .box-desc { font-size: 11px; color: var(--text3); line-height: 1.5; }
+  .arch-box-orange { background: #f0883e0d; border-color: #f0883e33; } .arch-box-orange .box-title { color: var(--accent); }
+  .arch-box-blue   { background: #58a6ff0d; border-color: #58a6ff33; } .arch-box-blue   .box-title { color: var(--blue); }
+  .arch-box-green  { background: #3fb9500d; border-color: #3fb95033; } .arch-box-green  .box-title { color: var(--green); }
+  .arch-box-purple { background: #bc8cff0d; border-color: #bc8cff33; } .arch-box-purple .box-title { color: var(--purple); }
+  .arch-box-teal   { background: #39d0d80d; border-color: #39d0d833; } .arch-box-teal   .box-title { color: var(--teal); }
+  .arch-box-dim    { background: var(--bg3); border-color: var(--border); } .arch-box-dim .box-title { color: var(--text2); }
+  .arch-label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: center; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+
+  /* ── CALLOUT ── */
+  .callout { border-radius: 8px; padding: 16px 20px; margin: 20px 0; border-left: 3px solid; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; font-size: 13px; margin-bottom: 4px; }
+  .callout-body p { font-size: 13px; margin-bottom: 0; }
+  .callout-warning { background: #d2992215; border-color: var(--yellow); } .callout-warning strong { color: var(--yellow); }
+  .callout-info    { background: #58a6ff0d; border-color: var(--blue); }  .callout-info strong { color: var(--blue); }
+  .callout-success { background: #3fb9500d; border-color: var(--green); } .callout-success strong { color: var(--green); }
+  .callout-danger  { background: #f8514915; border-color: var(--red); }   .callout-danger strong { color: var(--red); }
+
+  /* ── CODE ── */
+  .code-block { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; margin: 16px 0; overflow: hidden; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--bg4); border-bottom: 1px solid var(--border); }
+  .code-lang { font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 500; }
+  .code-file { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  pre { padding: 20px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; color: var(--text2); }
+  .kw  { color: var(--purple); } .str { color: var(--green); } .num { color: var(--accent2); }
+  .cmt { color: var(--text3); font-style: italic; } .key { color: var(--blue); } .val { color: var(--teal); }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--bg3); }
+  th { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  td:first-child { font-family: var(--mono); font-size: 12px; color: var(--blue); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+  .td-default { color: var(--accent2); font-family: var(--mono); font-size: 12px; }
+  .td-recommended { color: var(--teal); font-family: var(--mono); font-size: 12px; }
+
+  /* ── GRID CARDS ── */
+  .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 20px 0; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; transition: border-color 0.15s; }
+  .card:hover { border-color: var(--border2); }
+  .card-icon { font-size: 20px; margin-bottom: 10px; }
+  .card h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .card p { font-size: 13px; color: var(--text3); margin: 0; line-height: 1.6; }
+
+  /* ── STEPS ── */
+  .steps { margin: 20px 0; position: relative; }
+  .step { display: flex; gap: 20px; margin-bottom: 24px; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; background: #f0883e22; border: 1px solid var(--accent); color: var(--accent); font-family: var(--mono); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .step-body h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .step-body p { font-size: 13px; margin-bottom: 0; }
+
+  /* ── INLINE CODE ── */
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg4); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; color: var(--teal); }
+
+  /* ── COMPARISON ── */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .compare-card { border-radius: 8px; padding: 20px; border: 1px solid; }
+  .compare-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; font-family: var(--mono); letter-spacing: 0.05em; }
+  .compare-card ul { list-style: none; padding: 0; }
+  .compare-card ul li { font-size: 12.5px; color: var(--text2); padding: 4px 0 4px 16px; position: relative; border-bottom: 1px solid var(--border); line-height: 1.5; }
+  .compare-card ul li:last-child { border-bottom: none; }
+  .compare-card ul li::before { content: ''; position: absolute; left: 0; top: 11px; width: 6px; height: 6px; border-radius: 50%; }
+  .compare-pro { background: #3fb9500d; border-color: #3fb95033; } .compare-pro h4 { color: var(--green); } .compare-pro ul li::before { background: var(--green); }
+  .compare-con { background: #f8514910; border-color: #f8514933; } .compare-con h4 { color: var(--red); }   .compare-con ul li::before { background: var(--red); }
+
+  /* ── LIFECYCLE ── */
+  .lifecycle { display: flex; gap: 0; margin: 20px 0; overflow-x: auto; }
+  .lifecycle-step { flex: 1; min-width: 120px; padding: 14px 12px; text-align: center; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); position: relative; }
+  .lifecycle-step:first-child { border-left: 1px solid var(--border); border-radius: 8px 0 0 8px; }
+  .lifecycle-step:last-child { border-radius: 0 8px 8px 0; }
+  .lifecycle-step.active { background: #f0883e0d; border-color: #f0883e44; }
+  .lifecycle-step .ls-num { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+  .lifecycle-step .ls-title { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .lifecycle-step .ls-desc { font-size: 10px; color: var(--text3); line-height: 1.5; }
+  .lifecycle-step.active .ls-title { color: var(--accent); }
+
+  /* ── BENCHMARK BAR ── */
+  .bench-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .bench-label { font-family: var(--mono); font-size: 11px; color: var(--text2); width: 120px; flex-shrink: 0; text-align: right; }
+  .bench-bar-wrap { flex: 1; background: var(--bg3); border-radius: 4px; height: 20px; overflow: hidden; }
+  .bench-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-family: var(--mono); font-size: 10px; font-weight: 600; }
+  .bench-bar-green  { background: linear-gradient(90deg, #3fb95044, #3fb950); color: #3fb950; }
+  .bench-bar-orange { background: linear-gradient(90deg, #f0883e44, #f0883e); color: #f0883e; }
+  .bench-bar-red    { background: linear-gradient(90deg, #f8514944, #f85149); color: #f85149; }
+  .bench-bar-blue   { background: linear-gradient(90deg, #58a6ff44, #58a6ff); color: #58a6ff; }
+
+  /* ── FOOTER ── */
+  .doc-footer { border-top: 1px solid var(--border); padding: 32px 60px; display: flex; justify-content: space-between; align-items: center; }
+  .doc-footer p { font-family: var(--mono); font-size: 11px; color: var(--text3); margin: 0; }
+  .doc-footer a { color: var(--blue); text-decoration: none; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .hero, .content { padding: 32px 24px; }
+    .card-grid, .compare-grid { grid-template-columns: 1fr; }
+    .doc-footer { flex-direction: column; gap: 8px; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SITE NAV ── -->
+<nav class="site-nav">
+  <a href={`${base}/`} class="site-nav-logo">
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="30" height="30" rx="8" fill="#070D1C"/>
+      <rect width="30" height="30" rx="8" fill="url(#cg)"/>
+      <rect x="0.5" y="0.5" width="29" height="29" rx="7.5" stroke="#E25A1C" stroke-opacity="0.35" stroke-width="1" fill="none"/>
+      <line x1="2" y1="15" x2="28" y2="15" stroke="#1A2A40" stroke-width="0.5"/>
+      <polyline points="2,15 7,15 8.5,9 10,21 11.5,7 13,21 14.5,15 28,15" stroke="#E25A1C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.15"/>
+      <polyline points="2,15 7,15 8.5,9 10,21 11.5,7 13,21 14.5,15 28,15" stroke="#E25A1C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="28" cy="15" r="1.2" fill="#E25A1C" opacity="0.9"/>
+      <defs>
+        <linearGradient id="cg" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#0D1A30"/><stop offset="100%" stop-color="#070D1C"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div>
+      <div style="font-size: 14px; font-weight: 800; letter-spacing: 0.06em; color: #F0F4FF; font-family: 'JetBrains Mono', monospace;">DATA SIGNAL</div>
+      <div style="font-size: 8px; color: #2E3E56; letter-spacing: 0.12em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">Field Signals from Production</div>
+    </div>
+  </a>
+  <a href={`${base}/day2`} class="site-nav-back">← Day 2</a>
+</nav>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge"><span>⚡ CELEBORN</span></div>
+    <h1>Kubernetes Deployment Guide</h1>
+    <p>v0.5+ · EKS · Production</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Overview</div>
+    <a href="#architecture" class="nav-link"><span class="dot"></span>Architecture</a>
+    <a href="#when-to-use" class="nav-link"><span class="dot"></span>When to Use</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Deployment</div>
+    <a href="#node-groups" class="nav-link"><span class="dot"></span>Node Groups &amp; Topology</a>
+    <a href="#statefulset" class="nav-link"><span class="dot"></span>StatefulSet &amp; Helm</a>
+    <a href="#storage" class="nav-link"><span class="dot"></span>Storage: NVMe vs EBS</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Configuration</div>
+    <a href="#thread-disk" class="nav-link"><span class="dot"></span>Thread → Disk Mapping</a>
+    <a href="#knobs" class="nav-link"><span class="dot"></span>Key Config Knobs</a>
+    <a href="#replication" class="nav-link"><span class="dot"></span>Replication &amp; HA</a>
+    <a href="#workers" class="nav-link"><span class="dot"></span>Worker Sizing</a>
+    <a href="#autoscaling" class="nav-link"><span class="dot"></span>Autoscaling</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Operations</div>
+    <a href="#decommission" class="nav-link"><span class="dot"></span>Graceful Decommission</a>
+    <a href="#upgrades" class="nav-link"><span class="dot"></span>Upgrades</a>
+    <a href="#storage-tiers" class="nav-link"><span class="dot"></span>Storage Tiers &amp; S3</a>
+    <a href="#resilience" class="nav-link"><span class="dot"></span>AZ Resilience on AWS</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Reference</div>
+    <a href="#benchmarks" class="nav-link"><span class="dot"></span>Benchmarks</a>
+    <a href="#monitoring" class="nav-link"><span class="dot"></span>Monitoring</a>
+    <a href="#spark-config" class="nav-link"><span class="dot"></span>Spark Integration</a>
+    <a href="#production-learnings" class="nav-link"><span class="dot"></span>Production Learnings</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <div class="hero">
+    <div class="hero-eyebrow">Data on EKS · Production Guide</div>
+    <h2>Apache <span>Celeborn</span> on Kubernetes</h2>
+    <p class="hero-desc">A comprehensive field guide for deploying, scaling, and operating Apache Celeborn as a Remote Shuffle Service on Amazon EKS — covering architecture, storage choices, node topology, graceful upgrades, and production-tested configuration knobs.</p>
+    <div class="hero-tags">
+      <span class="tag tag-orange">Apache Celeborn 0.5+</span>
+      <span class="tag tag-blue">Amazon EKS</span>
+      <span class="tag tag-green">Spark on Kubernetes</span>
+      <span class="tag tag-purple">Karpenter</span>
+      <span class="tag tag-teal">Remote Shuffle Service</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- 01 ARCHITECTURE -->
+    <div class="section" id="architecture">
+      <div class="section-header"><span class="section-number">01</span><h2>Architecture Overview</h2></div>
+      <p>Celeborn has three distinct components with different operational characteristics. Understanding these boundaries is the prerequisite for every deployment decision.</p>
+      <div class="arch-diagram">
+        <div class="arch-label">Spark Application Layer</div>
+        <div class="arch-row">
+          <div class="arch-box arch-box-blue"><div class="box-title">Spark Driver</div><div class="box-desc">LifecycleManager embedded here. Manages shuffle metadata, requests slots from Master.</div></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-box-blue"><div class="box-title">Spark Executors (N)</div><div class="box-desc">ShuffleClient embedded here. Pushes shuffle data directly to Workers.</div></div>
+        </div>
+        <div style="text-align:center; padding: 12px 0; color: var(--text3); font-size: 18px;">↕ RPC &nbsp;&nbsp;&nbsp; ↕ Data Push</div>
+        <div class="arch-label">Celeborn Control Plane</div>
+        <div class="arch-row">
+          <div class="arch-box arch-box-orange"><div class="box-title">Master (×3, Raft HA)</div><div class="box-desc">Manages resources. Allocates slots. Syncs state via Raft. Spans multiple AZs. NOT on data path.</div></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-box-orange"><div class="box-title">Master (Leader)</div><div class="box-desc">Active leader handles all slot allocation. Followers ready for failover in seconds.</div></div>
+        </div>
+        <div style="text-align:center; padding: 12px 0; color: var(--text3); font-size: 18px;">↕ Push / Fetch</div>
+        <div class="arch-label">Celeborn Data Plane (same AZ as Executors)</div>
+        <div class="arch-row">
+          <div class="arch-box arch-box-green"><div class="box-title">Worker Pod A</div><div class="box-desc">Receives pushed shuffle data. Merges partitions. Serves reads. NVMe or EBS backed.</div></div>
+          <div class="arch-arrow"> </div>
+          <div class="arch-box arch-box-green"><div class="box-title">Worker Pod B</div><div class="box-desc">Replica target if replication enabled. Dedicated node group, 1 pod per node.</div></div>
+          <div class="arch-arrow"> </div>
+          <div class="arch-box arch-box-green"><div class="box-title">Worker Pod C</div><div class="box-desc">Load-balanced by slot count. Unhealthy workers excluded by Master heartbeat.</div></div>
+        </div>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><strong>Critical distinction</strong><p>Masters are <em>control plane only</em> — they do not touch shuffle data. Workers are the data plane. All performance decisions (storage, placement, thread tuning) apply to Workers, not Masters. Masters should span AZs for Raft quorum. Workers should be co-located with Spark executors.</p></div>
+      </div>
+      <p>Minimum production setup: <strong>3 Masters + 4+ Workers</strong>. Never run multiple Masters or Workers on the same node.</p>
+    </div>
+
+    <!-- 02 WHEN TO USE -->
+    <div class="section" id="when-to-use">
+      <div class="section-header"><span class="section-number">02</span><h2>When to Use Celeborn</h2></div>
+      <p>Celeborn is a strategic choice, not a universal performance accelerator. Based on Data on EKS TPC-DS 3TB benchmarks, the trade-offs are clear.</p>
+      <div class="compare-grid">
+        <div class="compare-card compare-pro">
+          <h4>✓ Right fit for Celeborn</h4>
+          <ul>
+            <li>Large shuffle workloads (&gt;100GB per job)</li>
+            <li>Spark Dynamic Resource Allocation needed</li>
+            <li>Long-running complex pipelines (&gt;30min)</li>
+            <li>High executor churn causing shuffle loss</li>
+            <li>Multi-tenant clusters needing shuffle isolation</li>
+            <li>Hadoop ESS migration to Kubernetes</li>
+            <li>Storage-compute decoupling required</li>
+          </ul>
+        </div>
+        <div class="compare-card compare-con">
+          <h4>✗ Not the right fit</h4>
+          <ul>
+            <li>Small shuffle queries (sub-GB per stage)</li>
+            <li>OLAP-style queries with minimal shuffle</li>
+            <li>Latency-sensitive jobs where +16% overhead matters</li>
+            <li>Simple ETL with bounded data volumes</li>
+            <li>Clusters without dedicated storage-dense nodes</li>
+            <li>Teams without infra capacity to operate a stateful service</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout callout-success">
+        <div class="callout-icon">📊</div>
+        <div class="callout-body"><strong>Pinterest Production Result</strong><p>Pinterest's Moka platform (replacing 14,000-node Hadoop processing 120PB/day) adopted Celeborn on EKS and saw overall Spark job performance improve 5% on average, with primary gains in operational stability, reduced shuffle timeouts, and enabling true dynamic executor scaling.</p></div>
+      </div>
+    </div>
+
+    <!-- 03 NODE GROUPS -->
+    <div class="section" id="node-groups">
+      <div class="section-header"><span class="section-number">03</span><h2>Node Groups &amp; AZ Topology</h2></div>
+      <p>Node topology is the most impactful infrastructure decision for Celeborn performance. Get this right before anything else.</p>
+      <div class="card-grid">
+        <div class="card"><div class="card-icon">🎯</div><h4>Dedicated Node Groups</h4><p>Separate EKS managed node groups for Celeborn Workers and Spark Executors. Never co-locate them — Workers are I/O and network saturated, Executors are CPU/memory saturated.</p></div>
+        <div class="card"><div class="card-icon">🗺️</div><h4>Same AZ Co-location</h4><p>Celeborn Worker nodes and Spark Executor nodes must be in the same AZ. Cross-AZ shuffle traffic adds 1–5ms per push and destroys throughput at scale.</p></div>
+        <div class="card"><div class="card-icon">⚡</div><h4>EC2 Cluster Placement Group</h4><p>Place both node groups in the same EC2 Cluster Placement Group. This ensures physical proximity within the AZ for maximum network bandwidth (up to 25–100 Gbps ENA).</p></div>
+        <div class="card"><div class="card-icon">🔒</div><h4>Masters Span AZs</h4><p>Masters are control plane only — not on the data path. Spread 3 Masters across 3 AZs for Raft quorum resilience. An AZ failure loses one Master but the other two maintain quorum.</p></div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">celeborn-worker-nodepool.yaml (Karpenter)</span></div>
+        <pre><span class="kw">apiVersion:</span> <span class="val">karpenter.sh/v1</span>
+<span class="kw">kind:</span> <span class="val">NodePool</span>
+<span class="kw">metadata:</span>
+  <span class="kw">name:</span> <span class="val">celeborn-workers</span>
+<span class="kw">spec:</span>
+  <span class="kw">template:</span>
+    <span class="kw">metadata:</span>
+      <span class="kw">labels:</span>
+        <span class="kw">role:</span> <span class="val">celeborn-worker</span>
+    <span class="kw">spec:</span>
+      <span class="kw">nodeClassRef:</span>
+        <span class="kw">name:</span> <span class="val">celeborn-nodeclass</span>
+      <span class="kw">requirements:</span>
+        - <span class="kw">key:</span> <span class="str">"topology.kubernetes.io/zone"</span>
+          <span class="kw">operator:</span> <span class="val">In</span>
+          <span class="kw">values:</span> [<span class="str">"us-east-1a"</span>]  <span class="cmt"># pin to same AZ as Spark executors</span>
+        - <span class="kw">key:</span> <span class="str">"karpenter.k8s.aws/instance-family"</span>
+          <span class="kw">operator:</span> <span class="val">In</span>
+          <span class="kw">values:</span> [<span class="str">"i4i"</span>, <span class="str">"r6g"</span>, <span class="str">"r6gd"</span>]
+        - <span class="kw">key:</span> <span class="str">"karpenter.sh/capacity-type"</span>
+          <span class="kw">operator:</span> <span class="val">In</span>
+          <span class="kw">values:</span> [<span class="str">"on-demand"</span>]  <span class="cmt"># NEVER spot for workers</span>
+      <span class="kw">taints:</span>
+        - <span class="kw">key:</span> <span class="val">dedicated</span>
+          <span class="kw">value:</span> <span class="val">celeborn</span>
+          <span class="kw">effect:</span> <span class="val">NoSchedule</span>
+  <span class="kw">disruption:</span>
+    <span class="kw">consolidationPolicy:</span> <span class="val">WhenEmpty</span>  <span class="cmt"># never consolidate live workers</span>
+    <span class="kw">budgets:</span>
+      - <span class="kw">nodes:</span> <span class="str">"0"</span>  <span class="cmt"># no involuntary disruption during business hours</span></pre>
+      </div>
+      <div class="callout callout-danger">
+        <div class="callout-icon">🚫</div>
+        <div class="callout-body"><strong>Never use Spot Instances for Celeborn Workers</strong><p>A spot reclamation mid-job kills all in-flight shuffle data on that worker. Stage recomputation follows. At scale with dozens of concurrent jobs, one spot reclamation cascades into multiple job failures. Use On-Demand + ODCRs instead.</p></div>
+      </div>
+    </div>
+
+    <!-- 04 STATEFULSET -->
+    <div class="section" id="statefulset">
+      <div class="section-header"><span class="section-number">04</span><h2>StatefulSet &amp; Helm Deployment</h2></div>
+      <p>Celeborn's official Helm chart deploys both Masters and Workers as StatefulSets. This shapes every operational decision around upgrades, scaling, and node replacement.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">values.yaml — Helm chart key overrides</span></div>
+        <pre><span class="cmt"># ── Masters ──────────────────────────────────────────────</span>
+<span class="kw">master:</span>
+  <span class="kw">replicas:</span> <span class="num">3</span>
+  <span class="kw">resources:</span>
+    <span class="kw">requests:</span>
+      <span class="kw">cpu:</span> <span class="str">"4"</span>
+      <span class="kw">memory:</span> <span class="str">"8Gi"</span>
+  <span class="kw">podAntiAffinity:</span> <span class="val">required</span>     <span class="cmt"># 1 master per node, spread AZs</span>
+  <span class="kw">topologySpreadConstraints:</span>
+    - <span class="kw">topologyKey:</span> <span class="str">"topology.kubernetes.io/zone"</span>
+      <span class="kw">maxSkew:</span> <span class="num">1</span>
+      <span class="kw">whenUnsatisfiable:</span> <span class="val">DoNotSchedule</span>
+
+<span class="cmt"># ── Workers ──────────────────────────────────────────────</span>
+<span class="kw">worker:</span>
+  <span class="kw">replicas:</span> <span class="num">5</span>                     <span class="cmt"># min 4 for production</span>
+  <span class="kw">resources:</span>
+    <span class="kw">requests:</span>
+      <span class="kw">cpu:</span> <span class="str">"16"</span>
+      <span class="kw">memory:</span> <span class="str">"64Gi"</span>
+  <span class="kw">nodeSelector:</span>
+    <span class="kw">role:</span> <span class="val">celeborn-worker</span>
+  <span class="kw">tolerations:</span>
+    - <span class="kw">key:</span> <span class="val">dedicated</span>
+      <span class="kw">value:</span> <span class="val">celeborn</span>
+      <span class="kw">effect:</span> <span class="val">NoSchedule</span>
+  <span class="kw">terminationGracePeriodSeconds:</span> <span class="num">3600</span>
+
+<span class="cmt"># ── Celeborn config ───────────────────────────────────────</span>
+<span class="kw">celeborn:</span>
+  <span class="kw">celeborn.master.ha.enabled:</span> <span class="val">true</span>
+  <span class="kw">celeborn.master.ha.ratis.raft.server.storage.dir:</span> <span class="str">"/mnt/ratis"</span>
+  <span class="kw">celeborn.metrics.enabled:</span> <span class="val">true</span>
+  <span class="kw">celeborn.worker.storage.dirs:</span> <span class="str">"/mnt/disk1:disktype=SSD:capacity=1000Gi,/mnt/disk2:disktype=SSD:capacity=1000Gi"</span>
+  <span class="kw">celeborn.worker.flusher.buffer.size:</span> <span class="str">"256k"</span>
+  <span class="kw">celeborn.rpc.io.serverThreads:</span> <span class="num">64</span>
+  <span class="kw">celeborn.rpc.io.clientThreads:</span> <span class="num">64</span>
+  <span class="kw">celeborn.worker.graceful.shutdown.enabled:</span> <span class="val">true</span>
+  <span class="kw">celeborn.worker.graceful.shutdown.timeout:</span> <span class="str">"3540s"</span>  <span class="cmt"># 60s less than terminationGracePeriod</span></pre>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><strong>StatefulSet immutable fields</strong><p>VolumeClaimTemplates and podManagementPolicy are immutable in StatefulSets. You cannot change them via <code>helm upgrade</code>. Any change requires a blue/green migration — see the Upgrades section.</p></div>
+      </div>
+    </div>
+
+    <!-- 05 STORAGE -->
+    <div class="section" id="storage">
+      <div class="section-header"><span class="section-number">05</span><h2>Storage: NVMe Instance Store vs. EBS</h2></div>
+      <p>This is the single most consequential infrastructure decision for Celeborn on EKS.</p>
+      <div class="compare-grid">
+        <div class="compare-card compare-pro">
+          <h4>NVMe Instance Store (i4i, i3en, im4gn)</h4>
+          <ul>
+            <li>Highest raw shuffle throughput</li>
+            <li>Lowest write/read latency (~100μs vs ~1ms EBS)</li>
+            <li>No EBS throttle ceiling</li>
+            <li>Requires Local Static Provisioner</li>
+            <li>Data lost on node termination or recycle</li>
+            <li>Karpenter consolidation destroys data</li>
+            <li>Requires replication enabled for safety</li>
+          </ul>
+        </div>
+        <div class="compare-card compare-pro" style="background:#58a6ff0d; border-color:#58a6ff33;">
+          <h4 style="color:var(--blue)">EBS GP3 (recommended for production)</h4>
+          <ul>
+            <li>~5.7% lower throughput vs NVMe (Data on EKS benchmark)</li>
+            <li>Volume survives node recycles and host retirements</li>
+            <li>Detach/reattach during rolling upgrades</li>
+            <li>Independent capacity scaling</li>
+            <li>Provision 2+ volumes per worker for parallelism</li>
+            <li>16,000 IOPS + 1,000 MB/s per volume</li>
+            <li>Simpler operations — no Local Static Provisioner</li>
+          </ul>
+        </div>
+      </div>
+      <p>The Data on EKS benchmark confirmed that <strong>RAID 0 vs individual disks makes no measurable difference</strong> — just 0.0008% variance. Configure Celeborn to stripe across individual disks natively via multiple entries in <code>celeborn.worker.storage.dirs</code>.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">CONFIG</span><span class="code-file">Multi-disk configuration — 2 EBS or 4 NVMe</span></div>
+        <pre><span class="cmt"># 2 EBS GP3 volumes — production baseline</span>
+<span class="key">celeborn.worker.storage.dirs</span>: <span class="str">/mnt/disk1:disktype=SSD:capacity=1000Gi,/mnt/disk2:disktype=SSD:capacity=1000Gi</span>
+
+<span class="cmt"># 4 NVMe instance store disks — maximum performance</span>
+<span class="key">celeborn.worker.storage.dirs</span>: <span class="str">/mnt/nvme0:disktype=SSD,/mnt/nvme1:disktype=SSD,/mnt/nvme2:disktype=SSD,/mnt/nvme3:disktype=SSD</span>
+
+<span class="cmt"># Rule of thumb: diskCount × 8 for push threads, diskCount × 8 for fetch threads</span>
+<span class="key">celeborn.worker.push.io.threads</span>: <span class="num">32</span>   <span class="cmt"># 4 disks × 8</span>
+<span class="key">celeborn.worker.fetch.io.threads</span>: <span class="num">32</span>  <span class="cmt"># 4 disks × 8</span>
+
+<span class="cmt"># Increase flusher buffer for HDFS/remote writes</span>
+<span class="key">celeborn.worker.flusher.buffer.size</span>: <span class="str">4m</span>  <span class="cmt"># 4MB for HDFS, 256k ok for local disk</span></pre>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">🔧</div>
+        <div class="callout-body"><strong>Using NVMe with Kubernetes Local Static Provisioner</strong><p>Install <code>kubernetes-sigs/sig-storage-local-static-provisioner</code> to automatically discover and provision NVMe block devices as PersistentVolumes. Local PVs have node affinity — if a pod reschedules to a different node it will be stuck in Pending. Set PVC deletion policy to <code>Delete</code> to allow pods to create new volumes on new nodes.</p></div>
+      </div>
+    </div>
+
+    <!-- 06 THREAD-DISK (was 05b — fixed) -->
+    <div class="section" id="thread-disk">
+      <div class="section-header"><span class="section-number">06</span><h2>Thread → Disk Mapping: r7g.16xlarge Deep Dive</h2></div>
+      <p>The r7g.16xlarge is the recommended EKS Celeborn worker instance: 64 vCPU Graviton3, 512 GiB DDR5, 30 Gbps network, and a 20 Gbps (2,500 MB/s) aggregate EBS bandwidth ceiling.</p>
+      <div class="callout callout-info">
+        <div class="callout-icon">📌</div>
+        <div class="callout-body"><strong>The two golden rules for thread tuning</strong><p><code>push.io.threads = fetch.io.threads = diskCount × 8</code> &nbsp;|&nbsp; <code>OFFHEAP = diskCount × diskBuffer × 1.2</code><br>At the Celeborn default of 8 total threads, a 4-disk worker uses only 2 threads per disk. Correcting this is the single highest-impact tuning change.</p></div>
+      </div>
+
+      <div style="margin: 24px 0;">
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">512 GiB DDR5 Memory Allocation (4-disk baseline)</div>
+        <div style="display: flex; height: 36px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
+          <div style="width: 3%; background: #bc8cff22; border-right: 1px solid #bc8cff44; display: flex; align-items: center; justify-content: center;"><span style="font-family: var(--mono); font-size: 9px; color: var(--purple); white-space: nowrap;">heap 16g</span></div>
+          <div style="width: 15%; background: #f0883e22; border-right: 1px solid #f0883e44; display: flex; align-items: center; justify-content: center;"><span style="font-family: var(--mono); font-size: 10px; color: var(--accent);">off-heap 77g</span></div>
+          <div style="flex: 1; background: var(--bg3); display: flex; align-items: center; justify-content: center;"><span style="font-family: var(--mono); font-size: 11px; color: var(--text3);">OS + JVM + other (~419 GiB)</span></div>
+        </div>
+        <div style="display: flex; gap: 20px; margin-top: 6px; flex-wrap: wrap;">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--purple);">■ CELEBORN_WORKER_MEMORY = 16g (JVM heap)</span>
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--accent);">■ CELEBORN_WORKER_OFFHEAP_MEMORY = 4 × 16g × 1.2 = 77g (Netty push buffers)</span>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin: 16px 0;">
+        <table>
+          <thead><tr><th>EBS Disks</th><th>Total IOPS</th><th>Requested MB/s</th><th>Effective MB/s</th><th>Per-disk MB/s</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td>2 × GP3</td><td>32,000</td><td>2,000</td><td class="td-recommended">2,000</td><td class="td-recommended">1,000 ✓</td><td>Each disk gets full provisioned throughput</td></tr>
+            <tr><td>3 × GP3</td><td>48,000</td><td>3,000</td><td style="color:var(--yellow); font-family:var(--mono); font-size:12px;">2,500 ⚠</td><td style="color:var(--yellow); font-family:var(--mono); font-size:12px;">833 ⚠</td><td>Instance cap hit — disks share 2,500 MB/s</td></tr>
+            <tr style="background: #f0883e08;"><td><strong>4 × GP3 ★</strong></td><td>64,000</td><td>4,000</td><td style="color:var(--yellow); font-family:var(--mono); font-size:12px;">2,500 ⚠</td><td style="color:var(--yellow); font-family:var(--mono); font-size:12px;">625 ⚠</td><td>Best balance: max IOPS parallelism + I/O queue depth despite cap</td></tr>
+            <tr><td>6 × GP3</td><td>96,000</td><td>6,000</td><td style="color:var(--red); font-family:var(--mono); font-size:12px;">2,500 ✗</td><td style="color:var(--red); font-family:var(--mono); font-size:12px;">417 ✗</td><td>Throughput gain saturated — extra disks add IOPS only</td></tr>
+            <tr><td>8 × GP3</td><td>128,000</td><td>8,000</td><td style="color:var(--red); font-family:var(--mono); font-size:12px;">2,500 ✗</td><td style="color:var(--red); font-family:var(--mono); font-size:12px;">313 ✗</td><td>Only justified if IOPS-bound (many small files, high concurrency)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><strong>4 disks is the sweet spot for r7g.16xlarge — not 2</strong><p>More disks means more parallel I/O queues, lower per-disk queue depth, better IOPS distribution across concurrent Spark jobs, and higher total IOPS (64,000 vs 32,000). Set throughput per volume to <code>625</code> MB/s or <code>1000</code> and let the instance cap share it naturally.</p></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">StorageClass + StatefulSet volumeClaimTemplates — r7g.16xlarge, 4× EBS GP3</span></div>
+        <pre><span class="kw">apiVersion:</span> <span class="val">storage.k8s.io/v1</span>
+<span class="kw">kind:</span> <span class="val">StorageClass</span>
+<span class="kw">metadata:</span>
+  <span class="kw">name:</span> <span class="val">gp3-high-iops</span>
+<span class="kw">provisioner:</span> <span class="val">ebs.csi.aws.com</span>
+<span class="kw">parameters:</span>
+  <span class="kw">type:</span> <span class="val">gp3</span>
+  <span class="kw">iops:</span> <span class="str">"16000"</span>        <span class="cmt"># must be explicit — default gp3 = 3,000 IOPS only</span>
+  <span class="kw">throughput:</span> <span class="str">"1000"</span>  <span class="cmt"># MB/s per volume; instance cap (2,500) shared across all</span>
+<span class="kw">volumeBindingMode:</span> <span class="val">WaitForFirstConsumer</span>  <span class="cmt"># CRITICAL: binds PV to AZ where pod schedules</span>
+<span class="kw">reclaimPolicy:</span> <span class="val">Delete</span>
+<span class="kw">allowVolumeExpansion:</span> <span class="val">true</span>
+
+<span class="cmt"># ── Derived thread and memory config ─────────────────────────────────────────────</span>
+<span class="key">celeborn.worker.push.io.threads</span>: <span class="num">32</span>   <span class="cmt"># 4 disks × 8</span>
+<span class="key">celeborn.worker.fetch.io.threads</span>: <span class="num">32</span>  <span class="cmt"># 4 disks × 8</span>
+<span class="key">CELEBORN_WORKER_MEMORY</span>: <span class="str">16g</span>
+<span class="key">CELEBORN_WORKER_OFFHEAP_MEMORY</span>: <span class="str">77g</span>  <span class="cmt"># 4 × 16g × 1.2 Netty overhead</span></pre>
+      </div>
+      <div class="callout callout-danger">
+        <div class="callout-icon">🔒</div>
+        <div class="callout-body"><strong>WaitForFirstConsumer is non-negotiable</strong><p>Without it, the EBS PV binds to a random AZ when the PVC is created — before the pod schedules. If the PV lands in <code>us-east-1b</code> and your NodePool pins workers to <code>us-east-1a</code>, the pod will be permanently stuck in Pending with <em>"node had no available volume zone"</em>.</p></div>
+      </div>
+    </div>
+
+    <!-- 07 CONFIG KNOBS (was 06) -->
+    <div class="section" id="knobs">
+      <div class="section-header"><span class="section-number">07</span><h2>Key Configuration Knobs</h2></div>
+      <p>Most defaults are tuned for small clusters and need adjustment for production EKS deployments.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Default</th><th>Recommended</th><th>What it controls</th></tr></thead>
+          <tbody>
+            <tr><td>celeborn.worker.storage.dirs</td><td class="td-default">—</td><td class="td-recommended">1 entry per disk</td><td>Mount points for shuffle data. Each entry = a parallel write lane.</td></tr>
+            <tr><td>celeborn.worker.push.io.threads</td><td class="td-default">8</td><td class="td-recommended">diskCount × 8</td><td>Threads handling incoming push from Spark executors. Severely underutilizes CPU at default.</td></tr>
+            <tr><td>celeborn.worker.fetch.io.threads</td><td class="td-default">8</td><td class="td-recommended">diskCount × 8</td><td>Threads serving shuffle reads to reducers.</td></tr>
+            <tr><td>celeborn.worker.flusher.buffer.size</td><td class="td-default">256k</td><td class="td-recommended">256k (local) / 4m (HDFS)</td><td>Write buffer per flusher thread.</td></tr>
+            <tr><td>CELEBORN_WORKER_OFFHEAP_MEMORY</td><td class="td-default">2g</td><td class="td-recommended">diskCount × 16g × 1.2</td><td>Off-heap Netty push buffers. r7g.16xlarge + 4 disks = <strong>77g</strong>. The primary bottleneck at scale.</td></tr>
+            <tr><td>CELEBORN_WORKER_MEMORY</td><td class="td-default">2g</td><td class="td-recommended">16g (r7g.16xlarge)</td><td>JVM heap. Off-heap does the heavy lifting.</td></tr>
+            <tr><td>celeborn.worker.replicate.shuffle.files.enabled</td><td class="td-default">false</td><td class="td-recommended">true (NVMe) / optional (EBS)</td><td>Replicates partition data to a second worker.</td></tr>
+            <tr><td>celeborn.worker.graceful.shutdown.enabled</td><td class="td-default">false</td><td class="td-recommended">true</td><td>Enables graceful shutdown for Karpenter drains and rolling updates.</td></tr>
+            <tr><td>celeborn.worker.graceful.shutdown.timeout</td><td class="td-default">600s</td><td class="td-recommended">terminationGracePeriod - 60s</td><td>Set 60s less than pod terminationGracePeriodSeconds.</td></tr>
+            <tr><td>celeborn.rpc.io.serverThreads</td><td class="td-default">8</td><td class="td-recommended">64</td><td>RPC server I/O threads. Increase for high connection counts.</td></tr>
+            <tr><td>celeborn.rpc.io.clientThreads</td><td class="td-default">8</td><td class="td-recommended">64</td><td>RPC client threads for replication and master communication.</td></tr>
+            <tr><td>celeborn.worker.commitFiles.timeout</td><td class="td-default">120s</td><td class="td-recommended">240s</td><td>Timeout for commit operations on large shuffle stages.</td></tr>
+            <tr><td>celeborn.worker.replicate.fastFail.duration</td><td class="td-default">60s</td><td class="td-recommended">240s</td><td>How long to wait before failing replication.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-icon">🧵</div>
+        <div class="callout-body"><strong>Default thread counts severely under-utilize compute</strong><p>At default settings (8 push + 8 fetch), Celeborn used only ~3–4 cores out of 64 on an r7g.16xlarge. With the corrected 4-disk formula (32 push + 32 fetch), utilization jumped to ~15 active cores.</p></div>
+      </div>
+    </div>
+
+    <!-- 08 REPLICATION (was 07) -->
+    <div class="section" id="replication">
+      <div class="section-header"><span class="section-number">08</span><h2>Replication &amp; High Availability</h2></div>
+      <p>Celeborn provides two independent HA mechanisms at different layers.</p>
+      <div class="card-grid">
+        <div class="card"><div class="card-icon">🏛️</div><h4>Master HA — Raft Consensus</h4><p>3 Masters elected via Apache Ratis (Raft). Leader failure triggers re-election in seconds. Workers and Clients automatically reconnect to the new leader. Deploy Masters across 3 AZs.</p></div>
+        <div class="card"><div class="card-icon">📋</div><h4>Worker Data Replication</h4><p>When <code>celeborn.worker.replicate.shuffle.files.enabled=true</code>, each partition is pushed to two workers. Essential with NVMe instance store. ~2× write bandwidth cost.</p></div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">CONFIG</span><span class="code-file">Replication configuration</span></div>
+        <pre><span class="cmt"># Server-side replication</span>
+<span class="key">celeborn.worker.replicate.shuffle.files.enabled</span>: <span class="val">true</span>
+<span class="key">celeborn.worker.replicate.fastFail.duration</span>: <span class="str">240s</span>
+
+<span class="cmt"># Client-side replication toggle — disable when HDFS is the DFS tier</span>
+<span class="key">spark.celeborn.client.push.replicate.enabled</span>: <span class="val">true</span>
+
+<span class="cmt"># Rack-aware replication — places primary and replica in different AZs</span>
+<span class="key">celeborn.client.reserveSlots.rackaware.enabled</span>: <span class="val">true</span></pre>
+      </div>
+    </div>
+
+    <!-- 09 WORKER SIZING (was 08) -->
+    <div class="section" id="workers">
+      <div class="section-header"><span class="section-number">09</span><h2>Worker Sizing &amp; Capacity Planning</h2></div>
+      <p>Worker slot count drives capacity. Celeborn computes slots as: <strong>total usable disk size ÷ average shuffle file size</strong>. When slots are exhausted, the Master rejects new allocations.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Instance Type</th><th>vCPU</th><th>RAM</th><th>Storage</th><th>Best For</th></tr></thead>
+          <tbody>
+            <tr style="background: #f0883e08;"><td><strong>r7g.16xlarge ★</strong></td><td>64</td><td>512 GiB DDR5</td><td>4 × EBS GP3 (20 Gbps cap)</td><td>Recommended production baseline. Graviton3, 30 Gbps network. 4-disk config = 64,000 IOPS, 2,500 MB/s effective.</td></tr>
+            <tr><td>r7g.8xlarge</td><td>32</td><td>256 GiB DDR5</td><td>2–3 × EBS GP3 (10 Gbps cap)</td><td>Half-size baseline. 10 Gbps EBS cap = 1,250 MB/s max.</td></tr>
+            <tr><td>i4i.8xlarge</td><td>32</td><td>256 GB</td><td>2 × 3.75TB NVMe</td><td>Max raw throughput, no EBS cap. Requires replication + Local Static Provisioner.</td></tr>
+            <tr><td>i3en.6xlarge</td><td>24</td><td>192 GB</td><td>2 × 7.5TB NVMe</td><td>Very large shuffle data volumes (multi-TB per job).</td></tr>
+            <tr><td>r6gd.8xlarge</td><td>32</td><td>256 GB</td><td>1 × 1.9TB NVMe</td><td>Memory-heavy workloads, cost-optimized. Single NVMe limits parallelism.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-info">
+        <div class="callout-icon">📐</div>
+        <div class="callout-body"><strong>r7g.16xlarge capacity sizing (4-disk config)</strong><p>4 × 1 TiB EBS GP3 = 4 TiB usable shuffle storage per node. At average shuffle partition size of 64 MB = ~65,000 slots per worker. For 50–100 concurrent Spark jobs, start with 5 workers and add when Grafana shows slot utilization above 80%.</p></div>
+      </div>
+    </div>
+
+    <!-- 10 AUTOSCALING (was 09) -->
+    <div class="section" id="autoscaling">
+      <div class="section-header"><span class="section-number">10</span><h2>Autoscaling Workers</h2></div>
+      <p>Celeborn workers are <strong>hard to autoscale dynamically</strong>. They are stateful and you cannot kill a worker without draining it first. Most production deployments run a fixed worker fleet sized for peak load.</p>
+      <div class="card-grid">
+        <div class="card"><div class="card-icon">✅</div><h4>What works: Scale Up</h4><p>Adding new worker replicas is safe. New pods register with the Master immediately. Existing jobs are unaffected.</p></div>
+        <div class="card"><div class="card-icon">⚠️</div><h4>What's risky: Scale Down</h4><p>Removing workers must go through the decommission API. A worker abruptly killed while holding active shuffle partitions causes job failures.</p></div>
+        <div class="card"><div class="card-icon">🕐</div><h4>Time-based Scaling (Pinterest pattern)</h4><p>Scale up worker clusters ahead of known batch job waves rather than reacting to real-time metrics.</p></div>
+        <div class="card"><div class="card-icon">🔐</div><h4>Karpenter do-not-disrupt</h4><p>Annotate worker pods with <code>karpenter.sh/do-not-disrupt: "true"</code> to prevent involuntary disruption. Only remove after triggering the decommission API.</p></div>
+      </div>
+    </div>
+
+    <!-- 11 DECOMMISSION (was 10) -->
+    <div class="section" id="decommission">
+      <div class="section-header"><span class="section-number">11</span><h2>Graceful Decommission</h2></div>
+      <p>Abruptly killing a Celeborn worker pod destroys all in-flight shuffle partitions on that worker for every active job.</p>
+      <div class="lifecycle">
+        <div class="lifecycle-step active"><div class="ls-num">01</div><div class="ls-title">Drain Triggered</div><div class="ls-desc">Karpenter or manual drain signals node eviction</div></div>
+        <div class="lifecycle-step active"><div class="ls-num">02</div><div class="ls-title">SIGTERM → preStop</div><div class="ls-desc">Pod receives SIGTERM, preStop hook fires immediately</div></div>
+        <div class="lifecycle-step active"><div class="ls-num">03</div><div class="ls-title">Decommission API</div><div class="ls-desc">Worker stops accepting new slots, completes in-flight ops</div></div>
+        <div class="lifecycle-step"><div class="ls-num">04</div><div class="ls-title">Grace Period Wait</div><div class="ls-desc">K8s waits up to terminationGracePeriodSeconds</div></div>
+        <div class="lifecycle-step"><div class="ls-num">05</div><div class="ls-title">Clean Exit</div><div class="ls-desc">Worker exits cleanly, or SIGKILL after grace period</div></div>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">YAML</span><span class="code-file">Worker StatefulSet — graceful shutdown config</span></div>
+        <pre><span class="kw">spec:</span>
+  <span class="kw">template:</span>
+    <span class="kw">metadata:</span>
+      <span class="kw">annotations:</span>
+        <span class="kw">karpenter.sh/do-not-disrupt:</span> <span class="str">"true"</span>
+    <span class="kw">spec:</span>
+      <span class="kw">terminationGracePeriodSeconds:</span> <span class="num">3600</span>
+      <span class="kw">containers:</span>
+      - <span class="kw">name:</span> <span class="val">celeborn-worker</span>
+        <span class="kw">lifecycle:</span>
+          <span class="kw">preStop:</span>
+            <span class="kw">exec:</span>
+              <span class="kw">command:</span>
+                - <span class="str">"/bin/sh"</span>
+                - <span class="str">"-c"</span>
+                - <span class="str">"/opt/celeborn/sbin/decommission-worker.sh"</span>
+
+<span class="cmt"># decommission-worker.sh calls the Celeborn HTTP API:</span>
+<span class="cmt"># curl -X POST http://localhost:9096/exit?type=Decommission</span></pre>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-icon">⏱️</div>
+        <div class="callout-body"><strong>Tune terminationGracePeriodSeconds to your workload</strong><p>Start at 3600s (1 hour). Set Celeborn's internal <code>celeborn.worker.graceful.shutdown.timeout</code> to exactly 60 seconds less than this value to allow clean process exit before SIGKILL.</p></div>
+      </div>
+    </div>
+
+    <!-- 12 UPGRADES (was 11) -->
+    <div class="section" id="upgrades">
+      <div class="section-header"><span class="section-number">12</span><h2>Upgrades — Blue/Green is the Only Safe Path</h2></div>
+      <p>StatefulSet immutable fields mean you cannot do a simple <code>helm upgrade</code> for all changes.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Change Type</th><th>Strategy</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Config-only (no immutable fields)</td><td>Rolling update via helm upgrade</td><td>Safe. In-flight jobs continue on old workers while new jobs route to upgraded workers.</td></tr>
+            <tr><td>VolumeClaimTemplate change</td><td>Blue/Green StatefulSet migration</td><td>Deploy new StatefulSet with updated PVC spec. Decommission old workers one by one.</td></tr>
+            <tr><td>podManagementPolicy change</td><td>Blue/Green StatefulSet migration</td><td>Cannot be changed in-place.</td></tr>
+            <tr><td>Major version upgrade (e.g. 0.4 → 0.5)</td><td>Blue/Green with staged traffic shift</td><td>Deploy new version alongside old. Update Spark job configs to point to new master endpoints.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Deploy new StatefulSet (green)</h4><p>Deploy the new Celeborn version. New Masters and Workers come up alongside the old ones. Validate all new Workers are registered and healthy.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Update Spark job endpoints</h4><p>Update <code>spark.celeborn.master.endpoints</code> in your SparkApplication CRDs to point to the new Master addresses. New jobs use the new cluster.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Decommission old workers</h4><p>Call the decommission API on each old worker. Wait for active shuffle count to drop to zero before proceeding.</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Delete old StatefulSet</h4><p>Once all old workers are drained and no active jobs reference them, delete the old StatefulSet.</p></div></div>
+      </div>
+    </div>
+
+    <!-- 13 STORAGE TIERS (was 12) -->
+    <div class="section" id="storage-tiers">
+      <div class="section-header"><span class="section-number">13</span><h2>Multi-tier Storage &amp; S3 Status</h2></div>
+      <p>Celeborn supports a tiered storage model: memory → local disk → DFS/object store. This is <strong>not</strong> a spill-on-AZ-failure mechanism.</p>
+      <div class="arch-diagram">
+        <div class="arch-label">Celeborn Worker Storage Hierarchy (hot → cold)</div>
+        <div class="arch-row">
+          <div class="arch-box arch-box-purple"><div class="box-title">① Push Region (Memory)</div><div class="box-desc">Incoming push data buffered in off-heap memory. Flushed when buffer threshold exceeded.</div></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-box-green"><div class="box-title">② Local Disk (SSD/NVMe)</div><div class="box-desc">Primary persistent storage. Workers prefer this tier always.</div></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-box-dim"><div class="box-title">③ DFS / Object Store</div><div class="box-desc">Overflow tier when local disk runs low. HDFS is stable. S3 under active development.</div></div>
+        </div>
+      </div>
+      <div class="callout callout-danger">
+        <div class="callout-icon">🚧</div>
+        <div class="callout-body"><strong>S3 as a DFS tier is not production-ready yet (as of v0.6.x)</strong><p>There are known bugs in mixed SSD + S3 tier configurations where the S3 eviction path uses the wrong writer (LocalTierWriter), causing NoSuchFileException. Do not use S3 as a DFS tier in production until these are resolved. Watch CELEBORN-2143. HDFS is the stable choice today.</p></div>
+      </div>
+      <div class="card-grid">
+        <div class="card"><div class="card-icon">📦</div><h4>HDFS (stable, tested)</h4><p>Fully supported and battle-tested. Operationally heavier — adds another stateful system.</p></div>
+        <div class="card"><div class="card-icon">💾</div><h4>Larger EBS volumes (pragmatic)</h4><p>The simplest approach: provision large EBS GP3 volumes so local disk never fills. Avoids the DFS tier entirely for most workloads.</p></div>
+        <div class="card"><div class="card-icon">⚡</div><h4>S3 Express One Zone (future)</h4><p>Single-digit millisecond latency, same-AZ access. Wait for the S3 integration to stabilize.</p></div>
+        <div class="card"><div class="card-icon">🔄</div><h4>Stage Recomputation (default fallback)</h4><p>Without any DFS tier, Celeborn's LifecycleManager triggers Spark stage recomputation. Acceptable if recomputation cost is low and jobs run on EBS-backed workers.</p></div>
+      </div>
+    </div>
+
+    <!-- 14 AZ RESILIENCE (was 13) -->
+    <div class="section" id="resilience">
+      <div class="section-header"><span class="section-number">14</span><h2>AZ Resilience on AWS</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Risk</th><th>Severity</th><th>AWS Mitigation</th></tr></thead>
+          <tbody>
+            <tr><td>AZ capacity unavailable for target instance type</td><td style="color:var(--yellow)">Medium</td><td>Use EC2 On-Demand Capacity Reservations (ODCRs) for your Celeborn worker instance family in the target AZ.</td></tr>
+            <tr><td>AZ-level failure (power, networking)</td><td style="color:var(--red)">High</td><td>Masters across 3 AZs survive. Workers and in-flight shuffle data lost. Jobs fail and recompute. Plan for it in SLAs.</td></tr>
+            <tr><td>Single worker node failure</td><td style="color:var(--yellow)">Medium</td><td>Enable partition replication. Reads succeed from replica.</td></tr>
+            <tr><td>Scheduled host maintenance / instance retirement</td><td style="color:var(--green)">Low</td><td>EBS-backed workers: volume survives retirement, reattaches to replacement node. NVMe: data lost.</td></tr>
+            <tr><td>Extended AZ degradation (&gt;weeks)</td><td style="color:var(--yellow)">Medium</td><td>Monitor AWS Health API. Have a runbook to shift target AZ if needed.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 15 BENCHMARKS (was 14) -->
+    <div class="section" id="benchmarks">
+      <div class="section-header"><span class="section-number">15</span><h2>Benchmarks — Data on EKS TPC-DS 3TB</h2></div>
+      <p>Results from the Data on EKS TPC-DS 3TB benchmark on Amazon EKS (EKS 1.33, r6g.8xlarge workers).</p>
+      <p><strong>Overall result:</strong> Celeborn showed +16% overall runtime vs native Spark shuffle on TPC-DS 3TB. Performance is highly query-dependent — large shuffle queries improved, small shuffle queries regressed significantly.</p>
+
+      <div style="margin: 24px 0;">
+        <p style="font-family:var(--mono); font-size:11px; color:var(--text3); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.08em;">Top 5 Query Improvements with Celeborn</p>
+        <div class="bench-row"><div class="bench-label">q99-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-green" style="width:60%">+10.1%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q21-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-green" style="width:55%">+9.2%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q22-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-green" style="width:41%">+6.8%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q15-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-green" style="width:39%">+6.5%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q45-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-green" style="width:35%">+5.8%</div></div></div>
+        <p style="font-family:var(--mono); font-size:11px; color:var(--text3); margin: 24px 0 12px; text-transform:uppercase; letter-spacing:0.08em;">Top 5 Query Regressions with Celeborn</p>
+        <div class="bench-row"><div class="bench-label">q91-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-red" style="width:80%">-135.8%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q92-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-red" style="width:72%">-121.3%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q39b-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-red" style="width:60%">-100.9%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q65-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-red" style="width:47%">-78.9%</div></div></div>
+        <div class="bench-row"><div class="bench-label">q68-v2.4</div><div class="bench-bar-wrap"><div class="bench-bar bench-bar-red" style="width:44%">-73.3%</div></div></div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">📌</div>
+        <div class="callout-body"><strong>Key benchmark finding: set spark.sql.adaptive.localShuffleReader.enabled=false</strong><p>This single parameter had the largest impact on stability. With it enabled, the worst-performing query regressed by ~240%. Setting it to false reduced that to ~40%. Always disable this when using Celeborn.</p></div>
+      </div>
+    </div>
+
+    <!-- 16 MONITORING (was 15) -->
+    <div class="section" id="monitoring">
+      <div class="section-header"><span class="section-number">16</span><h2>Monitoring &amp; Key Metrics</h2></div>
+      <p>Use the community-maintained Grafana dashboards from the Celeborn GitHub repo (<code>assets/grafana/</code>).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Alert Threshold</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td>Worker slot utilization</td><td style="color:var(--yellow)">Alert at &gt;80%</td><td>Approaching capacity. Scale workers before jobs fail with allocation errors.</td></tr>
+            <tr><td>Active shuffle count</td><td>Baseline + watch</td><td>Number of in-progress shuffle operations. Spike = job surge incoming.</td></tr>
+            <tr><td>Push data latency (p99)</td><td style="color:var(--yellow)">Alert at &gt;100ms</td><td>Network congestion or worker overload.</td></tr>
+            <tr><td>Fetch data latency (p99)</td><td style="color:var(--yellow)">Alert at &gt;200ms</td><td>Reducer read latency. High values indicate storage bottleneck.</td></tr>
+            <tr><td>Lost worker count</td><td style="color:var(--red)">Alert at &gt;0</td><td>Workers that missed heartbeat. Immediate action required.</td></tr>
+            <tr><td>Excluded worker count</td><td style="color:var(--yellow)">Alert at &gt;0</td><td>Workers isolated by Master due to disk or health issues.</td></tr>
+            <tr><td>Worker disk utilization</td><td style="color:var(--red)">Alert at &gt;85%</td><td>Worker will be excluded by Master when disks fill.</td></tr>
+            <tr><td>Netty direct memory</td><td style="color:var(--yellow)">Alert at &gt;80% of OFFHEAP</td><td>Off-heap push buffer pressure. Increase CELEBORN_WORKER_OFFHEAP_MEMORY.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 17 SPARK CONFIG (was 16) -->
+    <div class="section" id="spark-config">
+      <div class="section-header"><span class="section-number">17</span><h2>Spark Integration Configuration</h2></div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">PROPERTIES</span><span class="code-file">spark-defaults.conf — Celeborn integration</span></div>
+        <pre><span class="cmt"># ── Core shuffle manager ─────────────────────────────────────</span>
+<span class="key">spark.shuffle.manager</span>                          <span class="val">org.apache.spark.shuffle.celeborn.SparkShuffleManager</span>
+<span class="key">spark.shuffle.service.enabled</span>                  <span class="val">false</span>
+<span class="key">spark.serializer</span>                               <span class="val">org.apache.spark.serializer.KryoSerializer</span>
+
+<span class="cmt"># ── Master endpoints (all 3 for HA) ─────────────────────────</span>
+<span class="key">spark.celeborn.master.endpoints</span>  <span class="val">celeborn-master-0.celeborn-master-svc.celeborn.svc.cluster.local:9097,celeborn-master-1.celeborn-master-svc.celeborn.svc.cluster.local:9097,celeborn-master-2.celeborn-master-svc.celeborn.svc.cluster.local:9097</span>
+
+<span class="cmt"># ── AQE — critical settings ──────────────────────────────────</span>
+<span class="key">spark.sql.adaptive.enabled</span>                     <span class="val">true</span>
+<span class="key">spark.sql.adaptive.localShuffleReader.enabled</span>  <span class="val">false</span>  <span class="cmt"># CRITICAL — see benchmark note</span>
+<span class="key">spark.sql.adaptive.skewJoin.enabled</span>            <span class="val">true</span>
+
+<span class="cmt"># ── Dynamic allocation ───────────────────────────────────────</span>
+<span class="key">spark.dynamicAllocation.enabled</span>                <span class="val">true</span>
+<span class="key">spark.dynamicAllocation.shuffleTracking.enabled</span> <span class="val">false</span>  <span class="cmt"># must be false with Celeborn</span>
+<span class="key">spark.shuffle.sort.io.plugin.class</span>             <span class="val">org.apache.spark.shuffle.celeborn.CelebornShuffleDataIO</span>  <span class="cmt"># Spark &gt;= 3.5</span>
+
+<span class="cmt"># ── Writer mode ──────────────────────────────────────────────</span>
+<span class="key">spark.celeborn.client.spark.shuffle.writer</span>     <span class="val">hash</span>  <span class="cmt"># hash or sort — hash uses more memory</span>
+
+<span class="cmt"># ── Replication ──────────────────────────────────────────────</span>
+<span class="key">spark.celeborn.client.push.replicate.enabled</span>   <span class="val">true</span>   <span class="cmt"># false if using HDFS as DFS tier</span>
+
+<span class="cmt"># ── Timeouts ─────────────────────────────────────────────────</span>
+<span class="key">spark.celeborn.client.push.stageEnd.timeout</span>    <span class="val">120s</span>
+<span class="key">spark.network.timeout</span>                          <span class="val">600s</span></pre>
+      </div>
+    </div>
+
+    <!-- 18 PRODUCTION LEARNINGS (was 17) -->
+    <div class="section" id="production-learnings">
+      <div class="section-header"><span class="section-number">18</span><h2>Production Learnings</h2></div>
+      <p>Distilled from Pinterest (Moka on EKS), Data on EKS benchmarks, and large-scale Alibaba deployments.</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">★</div><div class="step-body"><h4>Pinterest: Celeborn solved noisy-neighbor shuffle issues from YARN ESS</h4><p>Their previous Hadoop External Shuffle Service caused disk contention and shuffle timeouts. Celeborn's dedicated worker fleet eliminated this class of failure entirely and gave them 5% average job speedup at scale.</p></div></div>
+        <div class="step"><div class="step-num">★</div><div class="step-body"><h4>Thread count defaults are production anti-patterns</h4><p>The defaults (8 push threads, 8 fetch threads) were tuned for small single-machine deployments. On a 32-core worker with 2 EBS disks, you need 32 push threads and 32 fetch threads minimum. Failing to tune this leaves 90% of your compute idle during shuffle operations.</p></div></div>
+        <div class="step"><div class="step-num">★</div><div class="step-body"><h4>Off-heap memory is the most common bottleneck</h4><p><code>CELEBORN_WORKER_OFFHEAP_MEMORY</code> defaults to 2g. At peak push load across dozens of concurrent jobs, this saturates immediately. Allocate at least 50% of available instance memory as off-heap.</p></div></div>
+        <div class="step"><div class="step-num">★</div><div class="step-body"><h4>Do not use Celeborn as a universal performance booster</h4><p>Celeborn adds ~16% overhead on mixed workloads. Its real value is operational stability for large shuffle jobs, enabling true dynamic allocation, and decoupling storage from compute.</p></div></div>
+        <div class="step"><div class="step-num">★</div><div class="step-body"><h4>Size for peak, not average</h4><p>Monitor peak slot utilization over a 2-week window and add 30% headroom. Proactive scaling beats reactive scaling for a stateful shuffle service.</p></div></div>
+        <div class="step"><div class="step-num">★</div><div class="step-body"><h4>EBS beats NVMe for most production teams</h4><p>The 5.7% performance difference is rarely worth the operational complexity of NVMe instance store. Use EBS GP3 with 2+ volumes per worker and size the IOPS correctly.</p></div></div>
+      </div>
+      <div class="table-wrap" style="margin-top:32px;">
+        <table>
+          <thead><tr><th>Component</th><th>Decision</th><th>Rationale</th></tr></thead>
+          <tbody>
+            <tr><td>Celeborn Masters</td><td>3 replicas, span 3 AZs</td><td>Raft quorum, control plane HA. Transparent to jobs on leader failover.</td></tr>
+            <tr><td>Celeborn Workers</td><td>Dedicated nodegroup, same AZ as Executors</td><td>No noisy neighbors. Co-location minimizes shuffle network latency.</td></tr>
+            <tr><td>Storage</td><td>EBS GP3 (2+ volumes per worker)</td><td>Operational safety. Volumes survive node events.</td></tr>
+            <tr><td>Replication</td><td>Enabled for NVMe, optional for EBS</td><td>NVMe nodes are ephemeral. EBS volumes persist.</td></tr>
+            <tr><td>Instance type</td><td>On-demand only, ODCRs in target AZ</td><td>No spot. ODCR pre-reserves capacity.</td></tr>
+            <tr><td>Disruption</td><td>karpenter.sh/do-not-disrupt + preStop hook</td><td>Prevent involuntary kills. Always decommission before termination.</td></tr>
+            <tr><td>DFS tier</td><td>HDFS (stable) or large EBS (pragmatic)</td><td>S3 tier not production-ready yet.</td></tr>
+            <tr><td>Spark AQE</td><td>localShuffleReader=false</td><td>Most impactful single setting — prevents severe query regressions.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div class="doc-footer">
+    <p>Apache Celeborn on Kubernetes — Production Guide · Built from Data on EKS, Pinterest Moka, and community research</p>
+    <p>
+      <a href="https://awslabs.github.io/data-on-eks/docs/bestpractices/analytics/celeborn" target="_blank" rel="noopener noreferrer">Data on EKS Best Practices</a> ·
+      <a href="https://celeborn.apache.org/docs/latest/" target="_blank" rel="noopener noreferrer">Celeborn Docs</a> ·
+      <a href="https://github.com/apache/celeborn" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </p>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0, rootMargin: '-56px 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

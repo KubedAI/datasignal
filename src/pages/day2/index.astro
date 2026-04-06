@@ -1,0 +1,194 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const available = [
+  {
+    id: "celeborn",
+    name: "Apache Celeborn",
+    tagline: "Remote Shuffle Service on EKS",
+    color: "#f0883e",
+    tags: ["StatefulSet", "NVMe vs EBS", "Karpenter", "HA", "Graceful Drain"],
+    sections: 18,
+    href: `${base}/day2/celeborn`,
+  },
+];
+
+const coming = [
+  { name: "Apache Spark", color: "#E25A1C", tagline: "Executor sizing, DRA, Spark Operator on EKS" },
+  { name: "Apache Flink", color: "#C751EE", tagline: "Stateful pipelines, checkpointing, HA on Kubernetes" },
+  { name: "Apache Kafka", color: "#00C9FF", tagline: "Strimzi operator, tiered storage, rebalancing" },
+  { name: "Trino", color: "#F5C400", tagline: "Multi-tenant clusters, spill, fault-tolerant execution" },
+  { name: "StarRocks", color: "#4ADE80", tagline: "Shared-data mode, CN autoscaling, ingestion" },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Day 2 — Production Operations · Data Signal</title>
+    <meta name="description" content="End-to-end deployment and operations guides for data frameworks on Kubernetes and EKS. Apache Celeborn, Spark, Flink, Kafka and more." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { background: #050810; color: #F0F4FF; font-family: 'Space Grotesk', sans-serif; min-height: 100%; }
+      ::-webkit-scrollbar { width: 4px; background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #1A2540; border-radius: 2px; }
+
+      .nav-link {
+        font-size: 11px; color: #4A5A72; letter-spacing: 0.06em;
+        text-transform: uppercase; text-decoration: none; transition: color 0.2s;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .nav-link:hover { color: #F0F4FF; }
+
+      .guide-card {
+        display: flex; flex-direction: column;
+        background: #0A0F1E; border-radius: 16px;
+        border: 1px solid #1A2540;
+        text-decoration: none; color: inherit;
+        transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+        position: relative;
+      }
+      .guide-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+      }
+
+      .coming-card {
+        background: #0A0F1E; border-radius: 12px;
+        border: 1px solid #111928;
+        padding: 20px 22px;
+        opacity: 0.55;
+      }
+
+      @media (max-width: 640px) {
+        .guide-card-inner { padding: 24px 20px !important; }
+        .coming-grid { grid-template-columns: 1fr !important; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Site nav -->
+    <nav style="padding: 0 32px; height: 56px; border-bottom: 1px solid #0F1829; background: rgba(5,8,16,0.97); display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px);">
+      <a href={`${base}/`} style="display: flex; align-items: center; gap: 10px; text-decoration: none; flex: 1; min-width: 0;">
+        <svg width="34" height="34" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <rect width="30" height="30" rx="8" fill="#070D1C"/>
+          <rect width="30" height="30" rx="8" fill="url(#d2g)"/>
+          <rect x="0.5" y="0.5" width="29" height="29" rx="7.5" stroke="#E25A1C" stroke-opacity="0.35" stroke-width="1" fill="none"/>
+          <line x1="2" y1="15" x2="28" y2="15" stroke="#1A2A40" stroke-width="0.5"/>
+          <polyline points="2,15 7,15 8.5,9 10,21 11.5,7 13,21 14.5,15 28,15" stroke="#E25A1C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.15"/>
+          <polyline points="2,15 7,15 8.5,9 10,21 11.5,7 13,21 14.5,15 28,15" stroke="#E25A1C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="28" cy="15" r="1.2" fill="#E25A1C" opacity="0.9"/>
+          <defs>
+            <linearGradient id="d2g" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#0D1A30"/>
+              <stop offset="100%" stop-color="#070D1C"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div style="min-width: 0;">
+          <div style="font-size: 15px; font-weight: 800; letter-spacing: 0.06em; color: #F0F4FF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono', monospace;">DATA SIGNAL</div>
+          <div style="font-size: 8px; color: #2E3E56; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; font-family: 'JetBrains Mono', monospace;">Field Signals from Production</div>
+        </div>
+      </a>
+      <a href={`${base}/`} class="nav-link" style="flex-shrink: 0; white-space: nowrap;">← All Signals</a>
+    </nav>
+
+    <div style="max-width: 900px; margin: 0 auto; padding: 64px 32px 100px;">
+
+      <!-- Breadcrumb -->
+      <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 20px; background: #0A0F1E; border: 1px solid #1A2540; margin-bottom: 40px;">
+        <div style="width: 5px; height: 5px; border-radius: 50%; background: #E25A1C; box-shadow: 0 0 8px #E25A1C; animation: blink 2s ease-in-out infinite;"></div>
+        <span style="font-size: 9px; color: #4A5A72; letter-spacing: 0.14em; font-family: 'JetBrains Mono', monospace;">DATA SIGNAL / DAY 2</span>
+      </div>
+
+      <!-- Hero -->
+      <div style="margin-bottom: 56px;">
+        <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: #E25A1C; background: #E25A1C12; border: 1px solid #E25A1C30; border-radius: 6px; padding: 3px 10px; letter-spacing: 0.08em;">DAY 2</div>
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #2E3E56; letter-spacing: 0.08em;">Production Operations</div>
+        </div>
+        <h1 style="font-size: clamp(32px, 5vw, 48px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; background: linear-gradient(135deg, #F0F4FF 30%, #8A9CB0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          Deploy. Scale.<br/>Operate in Production.
+        </h1>
+        <p style="font-size: 15px; color: #5A6A7E; line-height: 1.75; max-width: 580px;">
+          End-to-end field guides for running data frameworks on Kubernetes and EKS —
+          architecture decisions, storage trade-offs, autoscaling, graceful upgrades, and the
+          production gotchas no documentation tells you.
+        </p>
+      </div>
+
+      <!-- Available guides -->
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 9px; color: #2E3E56; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace;">Available now</div>
+
+        {available.map(guide => (
+          <a href={guide.href} class="guide-card" style={`border-color: ${guide.color}28; margin-bottom: 16px;`}>
+            <!-- Color accent bar -->
+            <div style={`height: 3px; background: linear-gradient(90deg, ${guide.color}, ${guide.color}44);`}></div>
+
+            <div class="guide-card-inner" style="padding: 32px 36px; flex: 1;">
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px;">
+                <div>
+                  <div style={`font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: ${guide.color}; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;`}>
+                    Apache · Remote Shuffle Service
+                  </div>
+                  <h2 style="font-size: 26px; font-weight: 700; color: #F0F4FF; letter-spacing: -0.02em; margin-bottom: 6px;">{guide.name}</h2>
+                  <p style="font-size: 13px; color: #5A6A7E;">{guide.tagline}</p>
+                </div>
+                <div style={`font-size: 28px; color: ${guide.color}; font-weight: 300; flex-shrink: 0; margin-top: 4px;`}>→</div>
+              </div>
+
+              <!-- Tags -->
+              <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 24px;">
+                {guide.tags.map(tag => (
+                  <span style={`font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 10px; border-radius: 20px; border: 1px solid ${guide.color}30; color: ${guide.color}CC; background: ${guide.color}0A;`}>{tag}</span>
+                ))}
+              </div>
+
+              <!-- Meta -->
+              <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="width: 5px; height: 5px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px #22C55E;"></div>
+                  <span style="font-size: 11px; color: #22C55E; font-family: 'JetBrains Mono', monospace; font-weight: 600;">Available</span>
+                </div>
+                <span style="font-size: 11px; color: #3A4A5E; font-family: 'JetBrains Mono', monospace;">{guide.sections} sections · EKS · v0.5+</span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <!-- Coming soon -->
+      <div>
+        <div style="font-size: 9px; color: #2E3E56; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace;">Coming soon</div>
+        <div class="coming-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          {coming.map(fw => (
+            <div class="coming-card">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div style={`width: 8px; height: 8px; border-radius: 50%; background: ${fw.color}50; flex-shrink: 0;`}></div>
+                <span style="font-size: 13px; font-weight: 600; color: #4A5A72;">{fw.name}</span>
+                <span style="font-size: 9px; color: #2E3E56; font-family: 'JetBrains Mono', monospace; margin-left: auto; letter-spacing: 0.08em;">SOON</span>
+              </div>
+              <p style="font-size: 11px; color: #2E3E56; line-height: 1.6; padding-left: 18px;">{fw.tagline}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+
+    <style>
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+    </style>
+  </body>
+</html>
